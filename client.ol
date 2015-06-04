@@ -40,6 +40,7 @@ define eseguiComando
   {
       //'help'  - fatto
       //'list ervers' - fatto
+      //'addServer' - fatto
     println@Console("
       close                                               Chiude la sessione.
       help                                                Stampa la lista dei comandi 
@@ -96,16 +97,30 @@ define eseguiComando
     install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
     s.name = command.result[1];
     s.address = command.result[2];
-      
-    Server.location = s.address;
-    addServer@Server( s )( response );
     
-    if( response ) 
-    { 
-          serverList.server[#server] << s;
-          updateXml@Locale(serverList)();
-          println@Console( "Successo: Server aggiunto" )()
-        }
+    flag = true;
+
+    for(i=0, i<#serverList.server, i++)
+    {
+      if(serverList.server[i].address == s.address)
+        flag = false
+    };
+
+    if(flag)
+    {
+      Server.location = s.address;
+      addServer@Server( s )( response );
+      if( response ) 
+      { 
+        serverList.server[#server] << s;
+        updateXml@Locale(serverList)();
+        println@Console( "Successo: Server aggiunto" )()
+      }
+    }
+    else
+    {
+      println@Console( "Attenzione: Server già presente nella list servers" )()
+    }
       
   }
   else if ( command.result[0] == "removeServer") 
@@ -122,6 +137,7 @@ define eseguiComando
   {
     println@Console( "Comando non riconosciuto, digita 'help' per la lista dei comandi" )()
   }
+    }
 }
 
 main

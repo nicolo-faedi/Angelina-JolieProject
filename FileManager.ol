@@ -24,7 +24,7 @@ main
 		if(esiste)
 		{
 			//Leggo da file xml e inserisco la struttura in un tree
-			f.filename = name+"/serverList.xml";
+			f.filename = "Clients/"+name+"/serverList.xml";
 			readFile@File(f)(file);
 			file.options.charset = "UTF-8";
 			file.options.schemaLanguage = "it";
@@ -35,10 +35,13 @@ main
 		//Se non esiste
 		else
 		{
+			//Creo la directory
 			mkdir@File( name )( response );
-			name.file.filename = name+"/serverList.xml";
+			//Creo il file serverList.xml
+			name.file.filename = "Clients/"+name+"/serverList.xml";
 			name.file.content = "<root />";
 			writeFile@File( name.file )( void );
+			//ritorno l'albero vuoto
 			serverList = void
 		}
 	};
@@ -50,7 +53,7 @@ main
       	//Ottengo il file xml
       	valueToXml@XmlUtils( request )( response );
       	//Scrivo su file
-      	f.filename = name + "/serverList.xml";
+      	f.filename = "Clients/"+name+"/serverList.xml";
       	f.content = response;
       	writeFile@File( f )( void )
 	}
