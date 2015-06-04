@@ -6,7 +6,7 @@ include "string_utils.iol"
 
 outputPort Locale {
   Protocol: sodep
-  Interfaces: ClientInterface
+  Interfaces: LocalInterface
 }
 
 outputPort Server {
@@ -39,14 +39,15 @@ define eseguiComando
   else if( command.result[0] == "help")
   {
       //'help'  - fatto
-      //'list ervers' - fatto
+      //'list servers' - fatto
       //'addServer' - fatto
+      //'removeServer' - fatto
     println@Console("
       close                                               Chiude la sessione.
       help                                                Stampa la lista dei comandi 
       list servers                                        Visualizza la lista di Servers registrati.
       list new_repos                                      Visualizza la lista di repositories disponibili nei Server registrati.
-      list reg_repos                                      Visualizza la lista di repositories registrati localmente.
+      list reg_repos                                      Visualizza la lista di tutti i repositories registrati localmente.
       addServer [serverName] [serverAddress]              Aggiunge un nuovo Server alla lista dei Servers registrati.        
       removeServer [serverName]                           Rimuove 'serverName' dai Servers registrati.
       addRepository' [serverName] [repoName] [localPath]  Aggiunge il repository ai repo registrati.
@@ -114,7 +115,7 @@ define eseguiComando
       addServer@Server( s )( response );
       if( response ) 
       { 
-        serverList.server[#server] << s;
+        serverList.server[#serverList.server] << s;
         updateXml@Locale(serverList)();
         println@Console( "Successo: Server aggiunto" )()
       }
@@ -127,7 +128,23 @@ define eseguiComando
   }
   else if ( command.result[0] == "removeServer") 
   {
-    s.serverName = command.result[1]
+    s.serverName = command.result[1];
+
+    flag = false;
+    for(i=0, i<#serverList.server, i++)
+    {
+      if(serverList.server[i].name == s.serverName)
+      {
+        flag = true;
+        undef(serverList.server[i]);
+        updateXml@Locale(serverList)();
+        println@Console( "Successo: Server "+s.serverName+" eliminato" )()
+      }
+    };
+    if(!flag)
+    {
+      println@Console( "Attenzione: Server "+s.serverName+" non trovato" )()
+    }
   }
   else if ( command.result[0] == "addRepository") 
   {

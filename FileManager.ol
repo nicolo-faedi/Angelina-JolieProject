@@ -5,7 +5,7 @@ include "interface.iol"
 
 inputPort Input {
 	Location: "local"
-	Interfaces: ClientInterface
+	Interfaces: LocalInterface
 }
 
 main

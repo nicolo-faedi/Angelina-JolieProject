@@ -1,17 +1,30 @@
 include "console.iol"
 include "interface.iol"
 
-inputPort input {
-	Location: "socket://localhost:8000"
+outputPort Locale {
+	Protocol: sodep
+	Interfaces: LocalInterface
+}
+
+inputPort Input {
+	Location: "socket://localhost:8003"
 	Protocol: sodep
 	Interfaces: ClientInterface
 }
+
+embedded {
+  Jolie: "FileManager.ol" in Locale
+}
+
 
 init
 {
 	//input.location = "socket://localhost:8000";
 	global.name = "Server1";
+	readXml@Locale( "Servers/"+global.name )( response );
+	global.serverRoot << response;
 	println@Console("Nuovo server avviato\n >ServerName: "+global.name+"\n")()
+
 }
 
 execution { concurrent }

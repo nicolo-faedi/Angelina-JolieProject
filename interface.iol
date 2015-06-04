@@ -15,7 +15,10 @@ type Repo: void {
 }
 
 interface ClientInterface {
-  	RequestResponse:	addServer( Server )( bool ),
-  					  	readXml( string )( ServerList ),
-  					  	updateXml( ServerList )( void ) 					  	
+  	RequestResponse:	addServer( Server )( bool )
+}
+
+interface LocalInterface {
+  RequestResponse: readXml( string )( ServerList ),
+                   updateXml( ServerList )( void ) 
 }
