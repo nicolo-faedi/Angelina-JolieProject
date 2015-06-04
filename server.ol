@@ -22,12 +22,4 @@ main
 		response = true;
 		println@Console("- Un nuovo utente ha aggiunto il server")()
 	}
-
-/*
-	push(file)(response){
-		//Interrogo il FileManager
-		println@Console( "push request" )()
-		response = true;
-	}*/
-
 }

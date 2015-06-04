@@ -149,7 +149,7 @@ main
   in( name );
 
   //Uso la requestResponse del servizio FileManager.ol per ottenere la struttura del folder in locale
-  readXml@Locale(name)(response);
+  readXml@Locale("Clients/"+name)(response);
   
   //Se l'albero restituito è vuoto, avviso l'utente
   if(response == void)
