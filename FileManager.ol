@@ -19,7 +19,7 @@ main
 	//Se il file xml non esiste, lo crea e restituisce il tree vuoto
 	readXml( name )( serverList ) {
 		global.name = name;
-		exists@File(name)(esiste);
+		exists@File("Clients/"+name)(esiste);
 		//Se esiste 
 		if(esiste)
 		{
@@ -36,7 +36,7 @@ main
 		else
 		{
 			//Creo la directory
-			mkdir@File( name )( response );
+			mkdir@File( "Clients/"+name )( response );
 			//Creo il file serverList.xml
 			name.file.filename = "Clients/"+name+"/serverList.xml";
 			name.file.content = "<root />";

@@ -67,7 +67,7 @@ define eseguiComando
     }
     else
     {
-      println@Console("Nessun server salvato\n")()
+      println@Console("Attenzione: Nessun server salvato\n")()
     }
   }
   else if ( command.result[0]+" "+command.result[1] == "list reg_repos") 
@@ -103,7 +103,9 @@ define eseguiComando
     for(i=0, i<#serverList.server, i++)
     {
       if(serverList.server[i].address == s.address)
+      {
         flag = false
+      }
     };
 
     if(flag)
@@ -137,7 +139,6 @@ define eseguiComando
   {
     println@Console( "Comando non riconosciuto, digita 'help' per la lista dei comandi" )()
   }
-    }
 }
 
 main
