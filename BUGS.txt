@@ -1,6 +1,5 @@
 - removeServer (client)
   Il primo server viene rimosso con successo, il secondo lancia NullPointException
-- server non raggiunto termina l'esecuzione
   
   
   
