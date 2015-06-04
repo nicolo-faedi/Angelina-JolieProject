@@ -4,13 +4,18 @@ include "file.iol"
 include "xml_utils.iol"
 include "string_utils.iol"
 
-outputPort Output {
+outputPort Locale {
   Protocol: sodep
   Interfaces: ClientInterface
 }
 
+outputPort Server {
+Protocol: sodep
+Interfaces: ClientInterface
+}
+
 embedded {
-  Jolie: "FileManager.ol" in Output
+  Jolie: "FileManager.ol" in Locale
 }
 
 init
@@ -36,17 +41,17 @@ define eseguiComando
       //'help'  - fatto
       //'list ervers' - fatto
     println@Console("
-      'close'                                               Chiude la sessione.
-      'help'                                                Stampa la lista dei comandi 
-      'list servers'                                        Visualizza la lista di Servers registrati.
-      'list new_repos'                                      Visualizza la lista di repositories disponibili nei Server registrati.
-      'list reg_repos' -                                    Visualizza la lista di repositories registrati localmente.
-      'addServer [serverName] [serverAddress]               Aggiunge un nuovo Server alla lista dei Servers registrati.        
-      'removeServer [serverName]'                           Rimuove 'serverName' dai Servers registrati.
-      'addRepository' [serverName] [repoName] [localPath]   Aggiunge il repository ai repo registrati.
-      'push [serverName] [repoName]                         Fa push dell’ultima versione di 'repoName' locale sul server 'serverName'.
-      'pull [serverName] [repoName]                         Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
-      'delete [serverName] [repoName]                       Rimuove il repository dai repo registrati.\n")()
+      close                                               Chiude la sessione.
+      help                                                Stampa la lista dei comandi 
+      list servers                                        Visualizza la lista di Servers registrati.
+      list new_repos                                      Visualizza la lista di repositories disponibili nei Server registrati.
+      list reg_repos                                      Visualizza la lista di repositories registrati localmente.
+      addServer [serverName] [serverAddress]              Aggiunge un nuovo Server alla lista dei Servers registrati.        
+      removeServer [serverName]                           Rimuove 'serverName' dai Servers registrati.
+      addRepository' [serverName] [repoName] [localPath]  Aggiunge il repository ai repo registrati.
+      push [serverName] [repoName]                        Fa push dell’ultima versione di 'repoName' locale sul server 'serverName'.
+      pull [serverName] [repoName]                        Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
+      delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.\n")()
   } 
   else if ( command.result[0] +" "+ command.result[1] == "list servers") 
   {
@@ -88,19 +93,20 @@ define eseguiComando
   }
   else if ( command.result[0] == "addServer") 
   {
-    install ( ConnectException => println@Console( "Connessione Rifiutata, server irraggiungibile" )() );
+    install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
     s.name = command.result[1];
     s.address = command.result[2];
-    Output.location = s.address;
-    addServer@Output( s )( response );
-    if(response)
-    {
-      //Aggiungo il server alla struttura
-      serverList.server[#server] << s;
-      Output.location = "local";
-      updateLocalXml@Output(serverList)(r);
-      println@Console( "Server aggiunto con successo" )()
-    }
+      
+    Server.location = s.address;
+    addServer@Server( s )( response );
+    
+    if( response ) 
+    { 
+          serverList.server[#server] << s;
+          updateXml@Locale(serverList)();
+          println@Console( "Successo: Server aggiunto" )()
+        }
+      
   }
   else if ( command.result[0] == "removeServer") 
   {
@@ -124,14 +130,17 @@ main
   print@Console( "Insert Your Nickname > " )();
   registerForInput@Console()();
   in( name );
+
   //Uso la requestResponse del servizio FileManager.ol per ottenere la struttura del folder in locale
-  readLocalXml@Output(name)(response);
+  readXml@Locale(name)(response);
+  
   //Se l'albero restituito è vuoto, avviso l'utente
   if(response == void)
   {
     getServiceDirectory@File()(path);
     println@Console( "La cartella "+path+"/"+name+" è attualmente vuota\n" )()
   };
+  
   //In ogni caso, salvo il Tree in una variabile serverList
   serverList << response;
   println@Console("Benvenuto, digita 'help' per visualizzare la lista dei comandi disponibili")();

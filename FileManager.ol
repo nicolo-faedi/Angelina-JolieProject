@@ -17,7 +17,7 @@ main
 {
 	//Legge da file xml e inserisce i dati in un tree
 	//Se il file xml non esiste, lo crea e restituisce il tree vuoto
-	readLocalXml( name )( serverList ) {
+	readXml( name )( serverList ) {
 		global.name = name;
 		exists@File(name)(esiste);
 		//Se esiste 
@@ -43,15 +43,15 @@ main
 		}
 	};
 
-	updateLocalXml( serverList )( r ) {
+	updateXml( serverList )( r ) {
       	request.rootNodeName = "serverList";
       	request.indent = true;
       	request.root << serverList;
       	//Ottengo il file xml
       	valueToXml@XmlUtils( request )( response );
       	//Scrivo su file
-      	file.filename = name + "/serverList.xml";
-      	file.content = response;
-      	writeFile@File( file )( void )
+      	f.filename = name + "/serverList.xml";
+      	f.content = response;
+      	writeFile@File( f )( void )
 	}
 }
