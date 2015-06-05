@@ -8,14 +8,20 @@ inputPort Input {
 	Interfaces: LocalInterface
 }
 
+init
+{
+  	global.path = ""
+}
+
+execution{ sequential }
+
 main
 {
-	global.path = "";
-
 	//Legge da file xml e inserisce i dati in un tree
 	//Se il file xml non esiste, lo crea e restituisce il tree vuoto
-	readXml( dir )( serverList ) {
+	[ readXml( dir )( serverList ) {
 		global.path = dir;
+
 		exists@File(global.path)(esiste);
 		//Se esiste 
 		if(esiste)
@@ -41,9 +47,9 @@ main
 			//ritorno l'albero vuoto
 			serverList = void
 		}
-	};
+	} ] 
 
-	updateXml( serverList )( r ) {
+	[ updateXml( serverList )( r ) {
       	request.rootNodeName = "root";
       	request.indent = true;
       	request.root << serverList;
@@ -53,5 +59,5 @@ main
       	f.filename = global.path+"/local.xml";
       	f.content = response;
       	writeFile@File( f )( void )
-	}
+	} ]
 }

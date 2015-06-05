@@ -7,13 +7,13 @@ outputPort Locale {
 }
 
 inputPort Input {
-	Location: "socket://localhost:8003"
+	Location: "socket://localhost:8002"
 	Protocol: sodep
 	Interfaces: ClientInterface
 }
 
 embedded {
-  Jolie: "FileManager.ol" in Locale
+  Jolie: "FileManager.iol" in Locale
 }
 
 
@@ -31,8 +31,12 @@ execution { concurrent }
 
 main 
 {  
-	addServer( server )( response ){
-		response = true;
-		println@Console("- Un nuovo utente ha aggiunto il server")()
-	}
+	/* Riceve la richiesta di aggiunta server, ritorna true */
+	[ addServer( server )( response ){
+		response = true
+	} ] { println@Console("- Un nuovo utente ha aggiunto il server")() }
+
+	/* ..... */
+
+
 }

@@ -10,8 +10,14 @@ type Server: void {
 
 type Repo: void {
 	.name: string
-	.date: string
-	.version: int
+	.repo[0,*]: Repo
+	.file[0,*]: File
+}
+
+type File: void {
+	.name: string
+	.verison: long
+	.data: raw
 }
 
 interface ClientInterface {
@@ -19,6 +25,7 @@ interface ClientInterface {
 }
 
 interface LocalInterface {
-  RequestResponse: readXml( string )( ServerList ),
-                   updateXml( ServerList )( void ) 
+  	RequestResponse: 	readXml( string )( ServerList ),
+    	               	updateXml( ServerList )( void ),
+        	          	input( string )( any ) 
 }
