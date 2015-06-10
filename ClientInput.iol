@@ -73,7 +73,7 @@ main
   		      list reg_repos                                      Visualizza la lista di tutti i repositories registrati localmente.
   		      addServer [serverName] [serverAddress]              Aggiunge un nuovo Server alla lista dei Servers registrati.        
   		      removeServer [serverName]                           Rimuove 'serverName' dai Servers registrati.
-  		      addRepository' [serverName] [repoName] [localPath]  Aggiunge il repository ai repo registrati.
+  		      addRepository' [serverName] [repoName] [localPath]  Aggiunge una repository ai repo registrati. (Es. dal desktop)
   		      push [serverName] [repoName]                        Fa push dell’ultima versione di 'repoName' locale sul server 'serverName'.
   		      pull [serverName] [repoName]                        Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
   		      delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.\n")()
@@ -96,28 +96,53 @@ main
   		        println@Console("Attenzione: Nessun server salvato\n")()
   		    }
   		}
+
+        /*  Da testare if(repo != void)
+            Da gestire l'errore di Connection Refused */
+        else if ( command.result[0] +" "+ command.result[1] == "list new_repos" ) 
+        {
+            for(i=0, i<#global.serverList.server, i++) {
+                Server.location = global.serverList.server[i].address;
+                getListRepo@Server( )( repo );
+                for(j=0, j<#repo, j++) 
+                {
+                    if(repo != void )
+                    {
+                        for(k = 0, k < #global.serverList.server[i].repo, k++) {
+                            if(repo[j].name != global.serverList.server[i].repo[k].name) {
+                                println@Console("SERVER: "+global.serverList.server[i].name+"\nREPO["+j+"] "+repo[j].name )()
+                            }
+                        }
+                    }
+                    else
+                    {
+                        println@Console("Attenzione: "+global.serverList.server[i].name+" Non ha repository nuove")()
+                    }
+                }
+            }
+          
+        }
   		
-        /* */
+        /* Da testare if(size!= 0)*/
         else if ( command.result[0]+" "+command.result[1] == "list reg_repos") 
   		{
   		    print@Console( "\n" )();
-  		    size = #serverList.server.repo;
+  		    size = #global.serverList.server.repo;
   		    if(size != 0)
   		    {
-  		      for(i=0, i<#serverList.server, i++)
+  		      for(i=0, i<#global.serverList.server, i++)
   		      {
-  		        server << serverList.server[i];
-  		        println@Console(server.name+"\t"+server.address)();
-  		        for(j=0, j<#server.repo, j++)
+  		        println@Console(global.serverList.server[i].name+"\t"+global.serverList.server[i].address)();
+  		        for(j=0, j<#global.serverList.server[i].repo, j++)
   		        {
-  		          println@Console("\t"+j+"\t"+server.repo[j].name+"\t"+server.repo[j].date+"\t"+server.repo[j].version)()
+  		          println@Console("\t"+j+"\t"+global.serverList.server[i].repo[j].name+"\t"+global.serverList.server[i].repo[j].date+"\t"+global.serverList.server[i].repo[j].version)()
   		        };
   		        print@Console( "\n" )()
   		      }
   		    }
   		    else
   		    {
-  		      println@Console("Nessun repo salvato\n")()
+  		      println@Console("Attenzione: Nessun repo salvato\n")()
   		    }
   		
         }
@@ -181,6 +206,31 @@ main
   		        println@Console( "Attenzione: Server "+s.serverName+" non trovato" )()
   		    }
   		}
+        /* */
+        else if (command.result[0] == "addRepository")
+        {
+
+            with(command)
+            {
+                for(i=0, i<#serverList.server, i++) 
+                {
+                   if(serverList.server[i].name == .result[1]) 
+                    {
+                        Server.location = serverList.server[i].address
+                    }
+                };
+                repo.name = .result[2];
+                addRepository@Server(repo)(res);
+                if(res)
+                {
+                    println@Console( "Il file esiste già sul server" )()
+                }
+                else
+                {
+                    println@Console( "Il file non esiste sul server, dunque lo sta creando" )()
+                }
+            }
+        }
   		else
   		{
   		    println@Console( "Comando non riconosciuto, digita 'help' per la lista dei comandi" )()

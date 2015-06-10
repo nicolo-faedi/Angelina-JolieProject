@@ -22,7 +22,7 @@ main
     //Uso la requestResponse del servizio ClientInput.ol per ottenere la struttura del folder in locale
     input@Locale("nickname "+user)(response);
     println@Console("Benvenuto, digita 'help' per visualizzare la lista dei comandi disponibili")();
-  
+    
     //Avvio il loop per gli input dell'utente
     while( cmd != "close")
     {
