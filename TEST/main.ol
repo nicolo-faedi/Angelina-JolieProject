@@ -11,7 +11,7 @@ type File: string {
 }
 
 interface Interfaccia {
-	RequestResponse:	rr( Repo )( Repo )
+	RequestResponse:	readFile( Repo )( Repo )
 }
 
 outputPort Locale 
@@ -28,7 +28,7 @@ embedded {
 main
 {
 	repo = "EASY";
-  	rr@Locale(repo)(res);
+  	readFile@Locale(repo)(res);
   	valueToPrettyString@StringUtils(res)(r);
   	println@Console( "********STRUTTURA" )();
   	println@Console( r )()

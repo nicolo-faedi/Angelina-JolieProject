@@ -23,7 +23,8 @@ embedded {
 
 init
 {
-  global.serverList = ""
+    //root contiene .server (lista dei server registrati) e .repo(lista delle repo registrate)
+    global.root = ""
 }
 
 execution{ sequential }
@@ -50,11 +51,12 @@ main
         else if(command.result[0] == "nickname")
         {
             path = "Clients/"+command.result[1];
+            global.user = command.result[1];
             readXml@Locale(path)(tree);
-            global.serverList << tree;
+            global.root << tree;
             if(response == void)
             {
-                println@Console( "La cartella "+path+" è attualmente vuota\n" )()
+                println@Console( "Ciao "+command.result[1]+", hai attualmente "+#global.root.server+" server e "+#global.root.repo+" repositories registrati.\nDigita 'help' per la lista dei comandi disponibili" )()
             }
         }
 
@@ -79,89 +81,56 @@ main
   		      delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.\n")()
   		} 
   		
-        /* */
+        /* FATTO */
         else if ( command.result[0] +" "+ command.result[1] == "list servers") 
   		{
-  		    print@Console( "\n" )();
-  		    size = #global.serverList.server;
-  		    if(size != 0)
+  		    if(#global.root.server != 0)
   		    {
-  		        for(i=0, i<size, i++) {
-  		            println@Console(global.serverList.server[i].name +"\t"+global.serverList.server[i].address)()
-  		        };
-  		        print@Console("\n")()
+                println@Console( "[Servers Registrati]" )();
+  		        for(i=0, i<#global.root.server, i++) {
+  		            println@Console("ServerName: "+global.root.server[i].name +"\tServerAddress: "+global.root.server[i].address)()
+  		        }
   		    }
   		    else
   		    {
   		        println@Console("Attenzione: Nessun server salvato\n")()
   		    }
   		}
-
-        /*  Da testare if(repo != void)
-            Da gestire l'errore di Connection Refused */
-        else if ( command.result[0] +" "+ command.result[1] == "list new_repos" ) 
-        {
-            for(i=0, i<#global.serverList.server, i++) {
-                Server.location = global.serverList.server[i].address;
-                getListRepo@Server( )( repo );
-                for(j=0, j<#repo, j++) 
-                {
-                    if(repo != void )
-                    {
-                        for(k = 0, k < #global.serverList.server[i].repo, k++) {
-                            if(repo[j].name != global.serverList.server[i].repo[k].name) {
-                                println@Console("SERVER: "+global.serverList.server[i].name+"\nREPO["+j+"] "+repo[j].name )()
-                            }
-                        }
-                    }
-                    else
-                    {
-                        println@Console("Attenzione: "+global.serverList.server[i].name+" Non ha repository nuove")()
-                    }
-                }
-            }
-          
-        }
   		
-        /* Da testare if(size!= 0)*/
+        /* FATTO */
         else if ( command.result[0]+" "+command.result[1] == "list reg_repos") 
   		{
-  		    print@Console( "\n" )();
-  		    size = #global.serverList.server.repo;
-  		    if(size != 0)
+  		    if(#global.root.repo != 0)
   		    {
-  		      for(i=0, i<#global.serverList.server, i++)
-  		      {
-  		        println@Console(global.serverList.server[i].name+"\t"+global.serverList.server[i].address)();
-  		        for(j=0, j<#global.serverList.server[i].repo, j++)
+                println@Console( "[Repositories Registrate]" )();
+  		        for(i=0, i<#global.root.repo, i++)
   		        {
-  		          println@Console("\t"+j+"\t"+global.serverList.server[i].repo[j].name+"\t"+global.serverList.server[i].repo[j].date+"\t"+global.serverList.server[i].repo[j].version)()
-  		        };
-  		        print@Console( "\n" )()
-  		      }
+  		            println@Console("RepoName: "+global.root.repo[i].name+" @ "+global.root.repo[i].serverName)()
+  		        }
   		    }
   		    else
   		    {
-  		      println@Console("Attenzione: Nessun repo salvato\n")()
+  		      println@Console("Attenzione: Nessun repo salvato")()
   		    }
-  		
         }
   		  
-        /* */
+        /* FATTO */
         else if ( command.result[0] == "addServer") 
   		{
             s.name = command.result[1];
             s.address = command.result[2];
   		    flag = true;
 
-  		    for(i=0, i<#global.serverList.server, i++)
+            //Controllo se ho già registrato il server 
+  		    for(i=0, i<#global.root.server, i++)
   		    {
-  		        if(global.serverList.server[i].address == s.address)
+  		        if(global.root.server[i].address == s.address)
   		        {
   		            flag = false
   		        }
   		    };
 
+            //Se non l'ho registrato, provo un handshake
   		    if(flag)
   		    {
                 scope( fault_connection )
@@ -173,8 +142,8 @@ main
   		      
   		        if( server_response ) 
   		        { 
-  		            global.serverList.server[#global.serverList.server] << s;
-  		            updateXml@Locale(global.serverList)();
+  		            global.root.server[#global.root.server] << s;
+  		            updateXml@Locale(global.root)();
   		            println@Console( "Successo: Server aggiunto" )()
   		        }
   		    }
@@ -185,38 +154,107 @@ main
   		      
   		}
 
-        /* */
+        /* FATT0 */
         else if ( command.result[0] == "removeServer") 
   		{
-  		    s.serverName = command.result[1];
+  		    name = command.result[1];
 
   		    flag = false;
-  		    for(i=0, i<#global.serverList.server, i++)
+  		    for(i=0, i<#global.root.server, i++)
   		    {
-  		        if(global.serverList.server[i].name == s.serverName)
+  		        if(global.root.server[i].name == name)
   		        {
       		        flag = true;
-      		        undef(global.serverList.server[i]);
-      		        updateXml@Locale(global.serverList)();
-      		        println@Console( "Successo: Server "+s.serverName+" eliminato" )()
+      		        undef(global.root.server[i]);
+      		        updateXml@Locale(global.root)();
+      		        println@Console( "Successo: Server '"+name+"' eliminato" )()
       		    }
   		    };
   		    if(!flag)
   		    {
-  		        println@Console( "Attenzione: Server "+s.serverName+" non trovato" )()
+  		        println@Console( "Attenzione: Server '"+name+"' non trovato" )()
   		    }
   		}
         /* */
+
         else if (command.result[0] == "addRepository")
         {
+            tmpServerName = command.result[1];
+            tmpRepoName = command.result[2];
+            localPath = command.result[3];
+            
+             
+            //Controllo in concorrenza se ho il server e il repo richiesti
+            a = false;
+            b = true;
 
-            with(command)
+            tmpServer = "";
+
             {
-                for(i=0, i<#serverList.server, i++) 
+                for(i=0, i<#global.root.server && !a, i++)
                 {
-                   if(serverList.server[i].name == .result[1]) 
+                    if(global.root.server[i].name == tmpServerName)
                     {
-                        Server.location = serverList.server[i].address
+                        tmpServer << global.root.server[i];
+                        a = true
+                    }
+                } |
+                for(j=0, j<#global.root.repo && b, j++)
+                {
+                    if(global.root.repo[j].name == tmpRepoName)
+                    {
+                        b = false
+                    }
+                }
+            };   
+        
+            if(a && b)
+            {
+                tmp.name = tmpRepoName;
+                tmp.path = localPath;
+                tmp.serverName = tmpServerName;
+
+                //controllo che il server sia online gestendo l'eccezione
+                {
+                    scope (fault_connection)
+                    {
+                        install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
+                        Server.location = tmpServer.address;
+                        addRepository@Server(tmp)()
+                    } |
+
+                    {
+                        exists@File(tmp.path)(res);
+                        global.root.repo[#global.root.repo] << tmp;
+                        if(res)
+                        {
+                            println@Console( "Successo: Ho registrato '"+tmp+"'' ")()
+                        }
+                        else
+                        {
+                            mkdir@File( tmp.path )( response );
+                            println@Console( "Attenzione: Non ho trovato '"+tmp.path+"', ho comunque creato la repository" )()
+                        };
+                        updateXml@Locale(global.root)(r)
+                    }
+                }
+            }
+            else if(!a)
+            {
+                println@Console( "Attenzione: Server non presente tra quelli registrati" )()
+            }
+            else if(!b)
+            {
+                println@Console( "Attenzione: Repositories già presente tra quelle registrate" )()
+            }
+
+            /*with(command)
+            {
+                for(i=0, i<#root.server, i++) 
+                {
+                   if(root.server[i].name == .result[1]) 
+                    {
+                        Server.location = root.server[i].address
                     }
                 };
                 repo.name = .result[2];
@@ -229,7 +267,7 @@ main
                 {
                     println@Console( "Il file non esiste sul server, dunque lo sta creando" )()
                 }
-            }
+            }*/
         }
   		else
   		{
