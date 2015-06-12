@@ -16,16 +16,6 @@ type RegRepo: void {
 	.serverName?: string
 }
 
-
-type Repo: any {
-	.repo[0,*]: Repo
-	.file[0,*]: File
-}
-
-type File: string {
-	.verison?: long
-}
-
 interface ClientInterface {
   	RequestResponse:	addServer( Server )( bool ),
   						addRepository( RegRepo )( void )
@@ -34,5 +24,5 @@ interface ClientInterface {
 interface LocalInterface {
   	RequestResponse: 	readXml( string )( Struttura ),
     	               	updateXml( Struttura )( void ),
-        	          	input( string )( any ) 
+        	          	input( string )( void ) 
 }

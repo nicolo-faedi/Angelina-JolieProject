@@ -22,11 +22,14 @@ embedded {
 
 init
 {
-	global.name = "Server666";
-	readXml@Locale( "Servers/"+global.name )( response );
-	global.root << response;
-	println@Console("Nuovo server avviato\n >ServerName: "+global.name+"\n")();
-
+	global.name = "Server1";
+	global.requests = 0;
+	readXml@Locale( "Servers/"+global.name )( tree );
+	global.root << tree;
+	println@Console("SERVER AVVIATO
+>Name: "+global.name+"
+>Repositories: "+#global.root.repo+"
+Attendo richieste...")();
 
 	semafori
 	
@@ -47,12 +50,20 @@ execution { concurrent }
 
 main 
 {  
-	/* Riceve la richiesta di aggiunta server, ritorna true */
-	[ addServer( server )( response ){
-		response = true
-	} ] { println@Console("- Un nuovo utente ha aggiunto il server")() }
+	/* 	Riceve la richiesta di aggiunta server, ritorna true */
+	[ addServer( server )( connection_response ){
+		connection_response = true
+	} ] { 
+		global.request++;
+		println@Console("Request#"+global.request+"] Un nuovo utente ha aggiunto il server")() }
 
-	/* ..... */
+
+
+	/* 	Riceve una repository da aggiungere.
+		1. Controlla se la repo è già presente
+		2. Se non è presente, aggiunge la repo alla struttura e all'xml.
+		Gestisce la concorrenza sulla struttura global.root e sulla scrittura
+		su xml. */
 	[ addRepository( regRepo )(){
 		//Partiamo dal presupposto che la repo non esista
 		a = false;
@@ -80,7 +91,9 @@ main
 
 					release@SemaphoreUtils(sRequest)(sResponse);
 					mkdir@File( regRepo.path )( response );
-					println@Console( "- Un utente ha aggiunto una repository" )();
+
+					global.request++;
+					println@Console("Request#"+global.request+"] Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )();
 					flag = true
 				}
 				else 
@@ -92,7 +105,8 @@ main
 		}
 		else
 		{
-			println@Console( "- Un utente ha provato ad aggiungere una repository" )()
+			global.request++;
+			println@Console("Request#"+global.request+"] Un utente ha provato ad aggiungere una repository già presente" )()
 		}
 
 	} ]

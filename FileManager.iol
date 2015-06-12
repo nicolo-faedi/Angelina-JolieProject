@@ -17,8 +17,11 @@ execution{ sequential }
 
 main
 {
-	//Legge da file xml e inserisce i dati in un tree
-	//Se il file xml non esiste, lo crea e restituisce il tree vuoto
+	/*	Leggo da file xml e inserisce i dati in un tree,
+		Se il file xml non esiste, lo crea e restituisce il tree vuoto.
+		Se esiste, controllo se esistono ancora tutti i path delle repository,
+		e se non esistono, avverto l'utente.
+		Alla sovrascrittura dell'xml, FileManager non avviserà più del path non trovato. */
 	[ readXml( dir )( root ) {
 		global.path = dir;
 
@@ -61,7 +64,8 @@ main
 		}
 	} ] 
 
-	[ updateXml( root )( r ) {
+	/*	Accetta in ingresso una struttura e la trasferisce sul file xml. */
+	[ updateXml( root )( xmlUpdate_res ) {
       	request.rootNodeName = "root";
       	request.indent = true;
       	request.root << root;
