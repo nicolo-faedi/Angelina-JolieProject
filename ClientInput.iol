@@ -43,10 +43,7 @@ main
         /*  Termina l'esecuzione del client */
         if ( command.result[0] == "close")
   		{
-  		    println@Console("
-  		    Disconnessione in corso...
-  		    Sessione conclusa.
-  		    ")()
+  		    println@Console("Disconnessione in corso...\nSessione conclusa.")()
   		}
 
         /*  Pulisce la schermata del terminale */
@@ -103,6 +100,28 @@ main
   		        println@Console("[ATTENZIONE]: Nessun server salvato\n")()
   		    }
   		}
+
+
+        else if( command.result[0] +" "+ command.result[1] == "list new_repos" )
+        {
+            if(#global.root.server != 0)
+            {
+                for(i=0, i<#global.root.server, i++)
+                {
+                    scope (fault_connection)
+                    {
+                        install( IOException => println@Console("[ATTENZIONE] : "+global.root.server[i].name+" @ "+global.root.server[i].address+" - Non raggiungibile" )() );
+                        Server.location = global.root.server[i].address;
+                        getServerRepoList@Server()(newRepoList);
+                        println@Console( global.root.server[i].name+" @ "+global.root.server[i].address)();
+                        for(j=0, j<#newRepoList.repo, j++)
+                        {
+                            println@Console( j+"] "+newRepoList.repo[j].name )()
+                        }
+                    }
+                }
+            }
+        }
   		
         /*  Stampo a video la lista dei server contenuti in root.repo */
         else if ( command.result[0]+" "+command.result[1] == "list reg_repos") 
@@ -240,7 +259,7 @@ main
                     {
                         install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
                         Server.location = tmpServer.address;
-                        addRepository@Server(tmp)()
+                        addRepository@Server(tmp)
                     } |
 
                     {

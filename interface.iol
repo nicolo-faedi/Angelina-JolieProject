@@ -18,7 +18,8 @@ type RegRepo: void {
 
 interface ClientInterface {
   	RequestResponse:	addServer( Server )( bool ),
-  						addRepository( RegRepo )( void )
+  						getServerRepoList( void )( Struttura )
+  	OneWay:				addRepository( RegRepo )
 }
 
 interface LocalInterface {
