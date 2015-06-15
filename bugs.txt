@@ -1,0 +1,1 @@
+controllare addServer quando il parametro ip non è corretto - si impalla
