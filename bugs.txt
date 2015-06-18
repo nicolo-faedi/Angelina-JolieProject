@@ -1,1 +1,2 @@
-controllare addServer quando il parametro ip non è corretto - si impalla
+- controllare addServer quando il parametro ip non è corretto - si impalla
+- versioning, controllare le versioni dei file nel tree_client lato server
