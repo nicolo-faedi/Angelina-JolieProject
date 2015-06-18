@@ -1,11 +1,11 @@
 include "console.iol"
 include "file.iol"
-include "interface.iol"
+include "Interface.iol"
 include "semaphore_utils.iol"
 include "time.iol"
 
 constants {
-	S_LOCATION = "socket://localhost:8003",
+	S_LOCATION = "socket://localhost:8000",
 	S_NAME = "Server1",
 	Timer_wait = 10000
 }
@@ -22,7 +22,7 @@ inputPort Input {
 }
 
 embedded {
-  Jolie: "FileManager.iol" in Locale
+  Jolie: "FileManager.ol" in Locale
 }
 
 
@@ -65,8 +65,6 @@ main
 		global.request++;
 		println@Console("Request#"+global.request+"] Un nuovo utente ha aggiunto il server")() }
 
-
-
 	/* 	Riceve una repository da aggiungere.
 		1. Controlla se la repo è già presente
 		2. Se non è presente, aggiunge la repo alla struttura e all'xml.
@@ -100,9 +98,7 @@ main
 					{
 						global.root.repo[#global.root.repo] << regRepo;
 						updateXml@Locale(global.root)(r);
-
 						mkdir@File( regRepo.path )( response );
-
 						global.request++;
 						println@Console("Request#"+global.request+"] Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )()
 						
@@ -119,11 +115,30 @@ main
 			}
 	} 
 
+	/*
 
-
+	*/
 	[ getServerRepoList()( newRepoList ) {
+
 		newRepoList << global.root
 	}]
 
 
+	[ versionStruttura( repo_tree )( update_tree ) {
+
+		//Ottengo la struttura relativa alla repo inviata dal client
+		for(i=0, i<#global.root.repo, i++)
+		{
+			if(repo_tree.name == global.root.repo[i].name)
+			{
+				listRequest.directory = global.root.repo[i].path;
+				println@Console( global.root.repo[i].path )();
+				list@File(listRequest)(listResponse);
+
+				println@Console( "CLIENT: "+#repo_tree.repo )();
+				println@Console( "SERVER: "+#listResponse.result )()
+			}
+		}
+	}]
 }
+

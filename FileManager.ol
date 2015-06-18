@@ -1,11 +1,19 @@
 include "file.iol"
 include "console.iol"
 include "xml_utils.iol"
-include "interface.iol"
+include "Interface.iol"
 
 inputPort Input {
 	Location: "local"
 	Interfaces: LocalInterface
+}
+
+outputPort FMLocale { 
+	Interfaces: LocalInterface
+}
+
+embedded {
+  Jolie: "FileToValue.ol" in FMLocale
 }
 
 init
@@ -75,5 +83,9 @@ main
       	f.filename = global.path+"/config.xml";
       	f.content = response;
       	writeFile@File( f )( void )
+	} ]
+
+	[ fileToValue(repo)(res) {
+		fileToValue@FMLocale(repo)(res)
 	} ]
 }

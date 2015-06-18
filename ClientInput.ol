@@ -1,7 +1,7 @@
 include "file.iol"
 include "console.iol"
 include "xml_utils.iol"
-include "interface.iol"
+include "Interface.iol"
 include "string_utils.iol"
 include "exec.iol"
 
@@ -20,7 +20,7 @@ outputPort Locale {
 }
 
 embedded {
-  Jolie: "FileManager.iol" in Locale
+  Jolie: "FileManager.ol" in Locale
 }  
 
 init
@@ -252,6 +252,7 @@ main
                 tmp.name = tmpRepoName;
                 tmp.path = localPath;
                 tmp.serverName = tmpServerName;
+                tmp.serverAddress = tmpServer.address;
 
                 //controllo che il server sia online gestendo l'eccezione
                 {
@@ -286,29 +287,37 @@ main
             {
                 println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate" )()
             }
-
-            /*with(command)
-            {
-                for(i=0, i<#root.server, i++) 
-                {
-                   if(root.server[i].name == .result[1]) 
-                    {
-                        Server.location = root.server[i].address
-                    }
-                };
-                repo.name = .result[2];
-                addRepository@Server(repo)(res);
-                if(res)
-                {
-                    println@Console( "Il file esiste già sul server" )()
-                }
-                else
-                {
-                    println@Console( "Il file non esiste sul server, dunque lo sta creando" )()
-                }
-            }*/
         }
 
+        /* */
+        else if (command.result[0] == "push")
+        {
+             //serverName command.result[1]
+             //repoName   command.result[2]
+            flag = false;
+            //Controllo se la repo è registrata
+            for(i=0, i<#global.root.repo && !flag, i++)
+            {
+                if(global.root.repo[i].name == command.result[2] && global.root.repo[i].serverName == command.result[1])
+                {
+                    scope( fault_connection )
+                    {
+                        install( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
+                        //Otteniamo la struttura/sottostruttura di quella repo
+                        fileToValue@Locale(global.root.repo[i].path)(repo_tree);
+                        Server.location = global.root.repo[i].serverAddress;
+                        versionStruttura@Server( repo_tree )( update_tree )
+                    };
+                    
+                    flag = true
+                }
+            };
+            //Se NO
+            if(!flag)
+            {
+                println@Console( "[ATTENZIONE]: Repository non trovata tra quelle registrate" )()
+            }
+        }
         /*  Se non ricevo un comando di quelli definiti, informo l'utente che il comando
             non è stato riconosciuto.   */
   		else

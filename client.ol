@@ -1,4 +1,4 @@
-include "interface.iol"
+include "Interface.iol"
 include "console.iol"
 include "file.iol"
 include "string_utils.iol"
@@ -9,7 +9,7 @@ outputPort Locale {
 }
 
 embedded {
-  Jolie: "ClientInput.iol" in Locale
+  Jolie: "ClientInput.ol" in Locale
 }
 
 main

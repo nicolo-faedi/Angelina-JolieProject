@@ -12,18 +12,33 @@ type Server: void {
 //Contiene .path locale e .serverName di riferimento
 type RegRepo: void {
 	.name: string
-	.path?: string
-	.serverName?: string
+	.path: string
+	.serverName: string
+	.serverAddress: string
+}
+
+type Repo: string {
+	.repo[0, *]: Repo 
+	.file[0, *]: File
+	.version?: long
+}
+
+type File: string {
+	.version: long
 }
 
 interface ClientInterface {
   	RequestResponse:	addServer( Server )( bool ),
-  						getServerRepoList( void )( Struttura )
+  						getServerRepoList( void )( Struttura ),
+  						versionStruttura( Repo )( Repo )
+
   	OneWay:				addRepository( RegRepo )
 }
 
 interface LocalInterface {
   	RequestResponse: 	readXml( string )( Struttura ),
     	               	updateXml( Struttura )( void ),
-        	          	input( string )( void ) 
+        	          	input( string )( void ),
+        	          	fileToValue( Repo )( Repo ),
+						getLastModString( string )( string )
 }
