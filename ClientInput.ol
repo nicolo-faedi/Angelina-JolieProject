@@ -304,9 +304,28 @@ main
                     {
                         install( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
                         //Otteniamo la struttura/sottostruttura di quella repo
-                        fileToValue@Locale(global.root.repo[i].path)(repo_tree);
+
+                        tmpRepo = global.root.repo[i].path;
+                        tmpRepo.relativePath = global.root.repo[i].name; 
+                        fileToValue@Locale(tmpRepo)(repo_tree);
+                        repo_tree = global.root.repo[i].name;
+
+                        
                         Server.location = global.root.repo[i].serverAddress;
-                        versionStruttura@Server( repo_tree )( update_tree )
+                        versionStruttura@Server( repo_tree )( pushList );
+                        for(i=0, i<#pushList.fileToPush, i++)
+                                {
+                                    println@Console( "To Push: "+ pushList.fileToPush[i] )()
+                                    //INVIA I FILE AL SERVER
+                                } ;
+                                
+                                for(j=0, j<#pushList.fileToPull, j++)
+                                {
+                                    println@Console("To PULL: "+ pushList.fileToPull[j] )()
+                                    //STAMPO FILE TO PULL
+                                }
+                            
+                        
                     };
                     
                     flag = true

@@ -34,12 +34,11 @@ execution{ concurrent }
 
 main
 {
-
 	fileToValue(repo)(res){
 
 		//Ottengo il lastModified della repo corrente
-		getLastModString@JavaService( repo )( modRes );
-		repo.version = long( modRes );
+		//getLastModString@JavaService( repo )( modRes );
+		//repo.version = long( modRes );
 
 		with( listRequest ){
 			.directory = repo;
@@ -56,7 +55,7 @@ main
 			list@File(listRequest)(listResponse);
 			//Se ho file
 			res << repo;
-
+			
 			for(i=0, i<#listResponse.result, i++) 
 			{
 				//Qui ottengo i file
@@ -66,11 +65,13 @@ main
 					//Aggiungo alla struttura il file e ottengo l'ultima modifica effettuata sul file
 					res.file[#res.file] = listResponse.result[i];
 					getLastModString@JavaService( res+"/"+listResponse.result[i] )( modRes );
-					res.file[#res.file-1].version = long(modRes)
+					res.file[#res.file-1].version = long( modRes );
+
+						println@Console( res.file[#res.file-1].version )();
+					res.file[#res.file-1].relativePath = res.relativePath+"/"+listResponse.result[i]
 				}
 				
 			}
-			//println@Console( "RES1: " +res )()
 		}
 		//Se ho cartelle
 		else
@@ -81,21 +82,20 @@ main
 			for(i=0, i<#listResponse.result, i++)
 			{
 				res << repo;
-
 				isDirectory@File(res+"/"+listResponse.result[i])(r);
 				if(r)
 				{
+
 					//println@Console( "FOLDER: "+listResponse.result[i] )();
-					fileToValue@Out(res+"/"+listResponse.result[i])(res2);
-					//res2 = repo+"/"+listResponse.result[i];
-					//println@Console( "RES2: "+res2 )();
+					tempRepo = res+"/"+listResponse.result[i];
+					tempRepo.relativePath = res.relativePath+"/"+listResponse.result[i];
+
+					fileToValue@Out(tempRepo)(res2);
 					
 					with(res)
 					{
 						.repo[j] << res2;
 						.repo[j] = listResponse.result[i]
-						//getLastModString@JavaService( res2 )( modRes );
-						//.version = long(modRes)
 					};
 					j++
 
@@ -107,7 +107,10 @@ main
 						//Aggiungo alla struttura il file e ottengo l'ultima modifica effettuata sul file
 						res.file[#res.file] = listResponse.result[i];
 						getLastModString@JavaService( res+"/"+listResponse.result[i] )( modRes );
-						res.file[#res.file-1].version = long(modRes)
+						
+						res.file[#res.file-1].version = long( modRes );
+						println@Console( res.file[#res.file-1].version )();
+						res.file[#res.file-1].relativePath = res.relativePath+"/"+listResponse.result[i]
 					}
 				}
 			}

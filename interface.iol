@@ -18,19 +18,26 @@ type RegRepo: void {
 }
 
 type Repo: string {
-	.repo[0, *]: Repo 
-	.file[0, *]: File
-	.version?: long
+	.repo[0 , *]: Repo 
+	.file[0 , *]: File
+	.relativePath: string
+	
 }
 
 type File: string {
+	.relativePath: string
 	.version: long
+}
+
+type PushList: void {
+	.fileToPush[0 , *]: string
+	.fileToPull[0 , *]: any
 }
 
 interface ClientInterface {
   	RequestResponse:	addServer( Server )( bool ),
   						getServerRepoList( void )( Struttura ),
-  						versionStruttura( Repo )( Repo )
+  						versionStruttura( Repo )( PushList )
 
   	OneWay:				addRepository( RegRepo )
 }

@@ -3,11 +3,13 @@ include "file.iol"
 include "Interface.iol"
 include "semaphore_utils.iol"
 include "time.iol"
+include "string_utils.iol"
+include "queue_utils.iol"
 
 constants {
 	S_LOCATION = "socket://localhost:8000",
 	S_NAME = "Server1",
-	Timer_wait = 10000
+	Timer_wait = 4000
 }
 
 outputPort Locale {
@@ -21,8 +23,13 @@ inputPort Input {
 	Interfaces: ClientInterface
 }
 
+outputPort JavaService {
+	Interfaces: LocalInterface
+}
+
 embedded {
-  Jolie: "FileManager.ol" in Locale
+  Jolie: "FileManager.ol" in Locale,
+  Java: "example.Info" in JavaService
 }
 
 
@@ -50,7 +57,6 @@ define semafori
 	sRequest.name = "xmlRes";
 	sRequest.permits = 1;
 	release@SemaphoreUtils(sRequest)(sResponse)
-
 
 }
 
@@ -124,21 +130,69 @@ main
 	}]
 
 
-	[ versionStruttura( repo_tree )( update_tree ) {
+	[ versionStruttura( repo_tree )( list ) {
 
+		flag = false;
 		//Ottengo la struttura relativa alla repo inviata dal client
-		for(i=0, i<#global.root.repo, i++)
+		for(i=0, i<#global.root.repo && !flag, i++)
 		{
-			if(repo_tree.name == global.root.repo[i].name)
+			if(repo_tree == global.root.repo[i].name)
 			{
-				listRequest.directory = global.root.repo[i].path;
-				println@Console( global.root.repo[i].path )();
-				list@File(listRequest)(listResponse);
-
-				println@Console( "CLIENT: "+#repo_tree.repo )();
-				println@Console( "SERVER: "+#listResponse.result )()
+				flag = true
 			}
+		};
+		if(flag)
+		{
+			coda << repo_tree;
+			dim = #coda;
+
+			while(dim > 0)
+			{
+				undef(tmpRoot);
+				tmpRoot << coda[0];
+				undef( coda[0] );
+				dim = #coda;
+
+				for(i=0, i<#tmpRoot.repo, i++)
+				{
+					coda[#coda] << tmpRoot.repo[i];
+					dim = #coda;
+
+					repo_path = "Servers/"+S_NAME+"/"+tmpRoot.repo[i].relativePath;
+					exists@File(repo_path)(esiste);
+					if(!esiste)
+					{
+						mkdir@File(repo_path)(mk_response)
+					}
+				};
+
+				for(j=0, j<#tmpRoot.file, j++)
+				{
+					file_path = "Servers/"+S_NAME+"/"+tmpRoot.file[i].relativePath;
+					exists@File(file_path)(esiste);
+					if(esiste)
+					{
+						getLastModString@JavaService(file_path)(s_version);
+						server_version = long(s_version);
+						println@Console( "SERVER VERSION: "+server_version + " - CLIENT VERSION: "+ tmpRoot.file[i].version)();
+						if(server_version < tmpRoot.file[i].version)
+						{
+							list.fileToPush[#list.fileToPush] = tmpRoot.file[i].relativePath
+						}
+						else if (server_version > tmpRoot.file[i].version)
+						{
+							list.fileToPull[#list.fileToPull] = tmpRoot.file[i].relativePath
+						}
+					}
+					else
+					{
+						list.fileToPush[#list.fileToPush] = tmpRoot.file[i].relativePath
+					}
+				}
+			}	
 		}
 	}]
+
+
 }
 
