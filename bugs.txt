@@ -1,2 +1,2 @@
 - controllare addServer quando il parametro ip non è corretto - si impalla
-- versioning, controllare le versioni dei file nel tree_client lato server
+- Controllare la PULL, quando il client non ha la repository in locale, si impalla il Loop delle richieste di creazione. Se la repository esiste invia correttamente la struttura al server.

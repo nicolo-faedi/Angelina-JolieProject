@@ -12,6 +12,10 @@ constants {
 	Timer_wait = 4000
 }
 
+interface Interfaccia {
+    RequestResponse:    setLastMod( SetVersion )( string )
+}
+
 outputPort Locale {
 	Protocol: sodep
 	Interfaces: LocalInterface
@@ -131,9 +135,9 @@ main
 
 
 	[ versionStruttura( repo_tree )( list ) {
-
 		flag = false;
 		//Ottengo la struttura relativa alla repo inviata dal client
+		//Cerco tra le regRepos Server
 		for(i=0, i<#global.root.repo && !flag, i++)
 		{
 			if(repo_tree == global.root.repo[i].name)
@@ -141,56 +145,87 @@ main
 				flag = true
 			}
 		};
+
+
+		//Se la trovo
 		if(flag)
 		{
-			coda << repo_tree;
+			//Visita in ampiezza della repo_tree inviata dal client
+			coda[0] << repo_tree;
 			dim = #coda;
 
 			while(dim > 0)
 			{
 				undef(tmpRoot);
 				tmpRoot << coda[0];
+
 				undef( coda[0] );
-				dim = #coda;
+				dim = #tmpRoot;
 
-				for(i=0, i<#tmpRoot.repo, i++)
 				{
-					coda[#coda] << tmpRoot.repo[i];
-					dim = #coda;
-
-					repo_path = "Servers/"+S_NAME+"/"+tmpRoot.repo[i].relativePath;
-					exists@File(repo_path)(esiste);
-					if(!esiste)
+					for(i=0, i<#tmpRoot.repo, i++)
 					{
-						mkdir@File(repo_path)(mk_response)
+						coda[#coda] << tmpRoot.repo[i];
+
+						repo_path = "Servers/"+S_NAME+"/"+tmpRoot.repo[i].relativePath;
+						exists@File(repo_path)(esiste);
+						if(!esiste)
+						{
+							mkdir@File(repo_path)(mk_response)
+						}
+					} |
+
+					for(j=0, j<#tmpRoot.file, j++)
+					{
+						file_path = "Servers/"+S_NAME+"/"+tmpRoot.file[j].relativePath;
+						exists@File(file_path)(esiste);
+						if(esiste)
+						{
+							getLastModString@JavaService(file_path)(s_version);
+							server_version = long(s_version);
+
+							if(server_version < tmpRoot.file[j].version)
+							{
+								list.fileToPush[#list.fileToPush] = tmpRoot.file[j].relativePath
+							}
+							else if (server_version > tmpRoot.file[j].version)
+							{
+								list.fileToPull[#list.fileToPull] = tmpRoot.file[j].relativePath
+							}
+						}
+						else
+						{
+							list.fileToPush[#list.fileToPush] = tmpRoot.file[j].relativePath
+						}
 					}
 				};
-
-				for(j=0, j<#tmpRoot.file, j++)
-				{
-					file_path = "Servers/"+S_NAME+"/"+tmpRoot.file[i].relativePath;
-					exists@File(file_path)(esiste);
-					if(esiste)
-					{
-						getLastModString@JavaService(file_path)(s_version);
-						server_version = long(s_version);
-						println@Console( "SERVER VERSION: "+server_version + " - CLIENT VERSION: "+ tmpRoot.file[i].version)();
-						if(server_version < tmpRoot.file[i].version)
-						{
-							list.fileToPush[#list.fileToPush] = tmpRoot.file[i].relativePath
-						}
-						else if (server_version > tmpRoot.file[i].version)
-						{
-							list.fileToPull[#list.fileToPull] = tmpRoot.file[i].relativePath
-						}
-					}
-					else
-					{
-						list.fileToPush[#list.fileToPush] = tmpRoot.file[i].relativePath
-					}
-				}
+				dim = #coda
 			}	
 		}
+	}]
+
+
+	[ push( push_rawList ) ]{
+
+		for(i=0, i<#push_rawList.file, i++)
+		{
+			push_rawList.file[i].filename = "Servers/"+S_NAME+"/"+push_rawList.file[i].filename;
+
+			clientVersion.path = push_rawList.file[i].filename;
+			clientVersion.version = push_rawList.file[i].version;
+			undef(push_rawList.file[i].version);
+
+			writeFile@File(push_rawList.file[i])();
+			setLastMod@JavaService(clientVersion)(r)
+		}		
+	}
+
+
+	[ pull( repo )( pull_rawList ) {
+
+		valueToPrettyString@StringUtils(repo)(asdf);
+		println@Console( asdf )()
+		
 	}]
 
 

@@ -3,9 +3,6 @@ include "file.iol"
 include "Interface.iol"
 include "string_utils.iol"
 
-
-
-
 interface Interfaccia {
 	RequestResponse:	fileToValue( Repo )( Repo ),
 						getLastModString(string)(string)
@@ -67,7 +64,6 @@ main
 					getLastModString@JavaService( res+"/"+listResponse.result[i] )( modRes );
 					res.file[#res.file-1].version = long( modRes );
 
-						println@Console( res.file[#res.file-1].version )();
 					res.file[#res.file-1].relativePath = res.relativePath+"/"+listResponse.result[i]
 				}
 				

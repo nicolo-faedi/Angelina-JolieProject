@@ -9,7 +9,7 @@ type Server: void {
 }
 
 //RegRepo è specifica per le repo registrate. Contiene il name.
-//Contiene .path locale e .serverName di riferimento
+//Contiene .path assoluto in locale e .serverName di riferimento
 type RegRepo: void {
 	.name: string
 	.path: string
@@ -31,15 +31,32 @@ type File: string {
 
 type PushList: void {
 	.fileToPush[0 , *]: string
-	.fileToPull[0 , *]: any
+	.fileToPull[0 , *]: string
+}
+
+type RawList: void {
+	.file[1 , *]: FileRequestType
+}
+
+type FileRequestType: void {
+	.filename: string
+	.content: raw
+	.version: long
+}
+
+type SetVersion: void {
+	.path: string
+	.version: long
 }
 
 interface ClientInterface {
   	RequestResponse:	addServer( Server )( bool ),
   						getServerRepoList( void )( Struttura ),
-  						versionStruttura( Repo )( PushList )
+  						versionStruttura( Repo )( PushList ),
+  						pull( Repo )( RawList )
 
-  	OneWay:				addRepository( RegRepo )
+  	OneWay:				addRepository( RegRepo ),
+  						push( RawList )
 }
 
 interface LocalInterface {
@@ -47,5 +64,6 @@ interface LocalInterface {
     	               	updateXml( Struttura )( void ),
         	          	input( string )( void ),
         	          	fileToValue( Repo )( Repo ),
-						getLastModString( string )( string )
+						getLastModString( string )( string ),
+						setLastMod( SetVersion )( string)
 }
