@@ -81,18 +81,18 @@ main
         else if( command.result[0] == "help")
   		{
   		    println@Console("
-                close                                               Chiude la sessione.
-                help                                                Stampa la lista dei comandi.
-                clear                                               Pulisce il terminale.
-                list servers                                        Visualizza la lista di Servers registrati.
-                list new_repos                                      Visualizza la lista di repositories disponibili nei Server registrati.
-                list reg_repos                                      Visualizza la lista di tutti i repositories registrati localmente.
-                addServer [serverName] [serverAddress]              Aggiunge un nuovo Server alla lista dei Servers registrati.        
-                removeServer [serverName]                           Rimuove 'serverName' dai Servers registrati.
-                addRepository [serverName] [repoName] [localPath]   Aggiunge una repository ai repo registrati. (Es. dal desktop)
-                push [serverName] [repoName]                        Fa push dell’ultima versione di 'repoName' locale sul server 'serverName'.
-                pull [serverName] [repoName]                        Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
-                delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.\n")()
+close                                               Chiude la sessione.
+help                                                Stampa la lista dei comandi.
+clear                                               Pulisce il terminale.
+list servers                                        Visualizza la lista di Servers registrati.
+list new_repos                                      Visualizza la lista di repositories disponibili nei Server registrati.
+list reg_repos                                      Visualizza la lista di tutti i repositories registrati localmente.
+addServer [serverName] [serverAddress]              Aggiunge un nuovo Server alla lista dei Servers registrati.        
+removeServer [serverName]                           Rimuove 'serverName' dai Servers registrati.
+addRepository [serverName] [repoName] [localPath]   Aggiunge una repository ai repo registrati. (Es. dal desktop)
+push [serverName] [repoName]                        Fa push dell’ultima versione di 'repoName' locale sul server 'serverName'.
+pull [serverName] [repoName]                        Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
+delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.\n")()
   		} 
   		
         /*  Stampo a video la lista dei server contenuti in root.server */
