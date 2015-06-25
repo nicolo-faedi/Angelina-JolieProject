@@ -62,8 +62,8 @@ interface ClientInterface {
 interface LocalInterface {
   	RequestResponse: 	readXml( string )( Struttura ),
     	               	updateXml( Struttura )( void ),
-        	          	input( string )( void ),
         	          	fileToValue( Repo )( Repo ),
 						getLastModString( string )( string ),
-						setLastMod( SetVersion )( string)
+						setLastMod( SetVersion )( string),
+						isValidIp(string)(bool)
 }

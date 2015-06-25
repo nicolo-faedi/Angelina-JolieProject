@@ -75,6 +75,8 @@ main
 		global.request++;
 		println@Console("Request#"+global.request+" : Un nuovo utente ha aggiunto il server")() }
 
+
+
 	/* 	Riceve una repository da aggiungere.
 		1. Controlla se la repo è già presente
 		2. Se non è presente, aggiunge la repo alla struttura e all'xml.
@@ -125,6 +127,8 @@ main
 			}
 	} 
 
+
+	
 	/*
 
 	*/
@@ -134,6 +138,10 @@ main
 	}]
 
 
+
+	/*
+
+	*/
 	[ versionStruttura( repo_tree )( list ) {
 		flag = false;
 		//Ottengo la struttura relativa alla repo inviata dal client
@@ -208,6 +216,10 @@ main
 	}
 
 
+
+	/*
+
+	*/
 	[ push( push_rawList ) ]{
 
 		for(i=0, i<#push_rawList.file, i++)
@@ -225,6 +237,10 @@ main
 	}
 
 
+
+	/*
+
+	*/
 	[ pull( repo )( pull_rawList ) {
 
 		valueToPrettyString@StringUtils(repo)(asdf);
