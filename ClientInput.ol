@@ -123,10 +123,17 @@ main
                         install( IOException => println@Console("[ATTENZIONE] : "+global.root.server[i].name+" @ "+global.root.server[i].address+" - Non raggiungibile" )() );
                         Server.location = global.root.server[i].address;
                         getServerRepoList@Server()(newRepoList);
-                        println@Console( global.root.server[i].name+" @ "+global.root.server[i].address)();
-                        for(j=0, j<#newRepoList.repo, j++)
+                        if(#newRepoList.repo != 0)
                         {
-                            println@Console( j+"] "+newRepoList.repo[j].name )()
+                            println@Console( global.root.server[i].name+" @ "+global.root.server[i].address)();
+                            for(j=0, j<#newRepoList.repo, j++)
+                            {
+                                println@Console( j+"] "+newRepoList.repo[j].name )()
+                            }
+                        }
+                        else
+                        {
+                            println@Console( global.root.server[i].name+" @ "+global.root.server[i].address+" Non ha repositories" )()
                         }
                     }
                 }
