@@ -4,3 +4,4 @@
 - // RISOLTO controllare list new repos quando non ci sono new repos 
 - // RISOLTO help accosato a sinistra
 - su tutti i comandi quando c'è un parametro mancante non deve crashare
+- da gestire vuoi creare?(Y/N) - N
