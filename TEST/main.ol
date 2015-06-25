@@ -4,14 +4,15 @@ include "string_utils.iol"
 type Repo: any {
 	.repo[0, *]: Repo 
 	.file[0, *]: File
-}
-
-type File: string {
 	.version?: long
 }
 
+type File: string {
+	.version: long
+}
+
 interface Interfaccia {
-	RequestResponse:	readFile( Repo )( Repo )
+	RequestResponse:	fileToValue( Repo )( Repo )
 }
 
 outputPort Locale 
@@ -22,13 +23,13 @@ outputPort Locale
 }
 
 embedded {
-  Jolie: "Ricorsione.ol" in Locale
+  Jolie: "FileToValue.ol" in Locale
 }
 
 main
 {
-	repo = "EASY";
-  	readFile@Locale(repo)(res);
+	root_path = "EASY/1";
+  	fileToValue@Locale(root_path)(res);
   	valueToPrettyString@StringUtils(res)(r);
   	println@Console( "********STRUTTURA" )();
   	println@Console( r )()

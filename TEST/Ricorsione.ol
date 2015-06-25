@@ -9,16 +9,21 @@ type Repo: any {
 }
 
 type File: string {
-	.version?: long
+	.version: long
 }
 
 interface Interfaccia {
-	RequestResponse:	readFile( Repo )( Repo )
+	RequestResponse:	fileToValue( Repo )( Repo ),
+						getLastModString(string)(string)
 }
 
 outputPort Out {
 	Location: "local"
 	Protocol: sodep
+	Interfaces: Interfaccia
+}
+
+outputPort JavaService {
 	Interfaces: Interfaccia
 }
 
@@ -29,7 +34,8 @@ inputPort In {
 }
 
 embedded {
-  Jolie: "Ricorsione.ol" in Out
+  Jolie: "Ricorsione.ol" in Out,
+  Java: "example.Info" in JavaService
 }
 
 execution{ concurrent }
@@ -37,7 +43,7 @@ execution{ concurrent }
 main
 {
 
-	readFile(repo)(res){
+	fileToValue(repo)(res){
 		with( listRequest ){
 			.directory = repo;
 			.dirsOnly = true	  
@@ -54,9 +60,15 @@ main
 
 			for(i=0, i<#listResponse.result, i++) 
 			{
+				//Qui ottengo i file
 				//println@Console( "FILE: "+listResponse.result[i] )();
 				if(listResponse.result[i] != ".DS_Store")
-					res.file[#res.file] = listResponse.result[i]	
+				{
+					//Aggiungo alla struttura il file e ottengo l'ultima modifica effettuata sul file
+					res.file[#res.file] = listResponse.result[i];
+					getLastModString@JavaService( res+"/"+listResponse.result[i] )( modRes );
+					res.file[#res.file-1].version = long(modRes)
+				}
 				
 			}
 			//println@Console( "RES1: " +res )()
@@ -66,7 +78,7 @@ main
 		{
 			listRequest.dirsOnly = false;
 			list@File(listRequest)(listResponse);
-
+			j = 0;
 			for(i=0, i<#listResponse.result, i++)
 			{
 				isDirectory@File(repo+"/"+listResponse.result[i])(r);
@@ -74,21 +86,27 @@ main
 				if(r)
 				{
 					//println@Console( "FOLDER: "+listResponse.result[i] )();
-					readFile@Out(repo+"/"+listResponse.result[i])(res2);
+					fileToValue@Out(repo+"/"+listResponse.result[i])(res2);
 					//res2 = repo+"/"+listResponse.result[i];
 					//println@Console( "RES2: "+res2 )();
 					
 					with(res)
 					{
-						.repo[i] << res2;
-						.repo[i] = listResponse.result[i]
-					}
+						.repo[j] << res2;
+						.repo[j] = listResponse.result[i]
+					};
+					j++
 
 				}
 				else
 				{
 					if(listResponse.result[i] != ".DS_Store")
-						res.file[#res.file]= listResponse.result[i]
+					{
+						//Aggiungo alla struttura il file e ottengo l'ultima modifica effettuata sul file
+						res.file[#res.file] = listResponse.result[i];
+						getLastModString@JavaService( res+"/"+listResponse.result[i] )( modRes );
+						res.file[#res.file-1].version = long(modRes)
+					}
 				}
 			}
 		}
