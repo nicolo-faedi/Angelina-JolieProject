@@ -73,7 +73,7 @@ main
 		connection_response = true
 	} ] { 
 		global.request++;
-		println@Console("Request#"+global.request+"] Un nuovo utente ha aggiunto il server")() }
+		println@Console("Request#"+global.request+" : Un nuovo utente ha aggiunto il server")() }
 
 	/* 	Riceve una repository da aggiungere.
 		1. Controlla se la repo è già presente
@@ -110,13 +110,13 @@ main
 						updateXml@Locale(global.root)(r);
 						mkdir@File( regRepo.path )( response );
 						global.request++;
-						println@Console("Request#"+global.request+"] Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )()
+						println@Console("Request#"+global.request+" : Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )()
 						
 					}
 					else
 					{
 						global.request++;
-						println@Console("Request#"+global.request+"] Un utente ha provato ad aggiungere una repository già presente" )()
+						println@Console("Request#"+global.request+" : Un utente ha provato ad aggiungere una repository già presente" )()
 					};
 
 					release@SemaphoreUtils(sRequest)(sResponse);
@@ -202,7 +202,10 @@ main
 				dim = #coda
 			}	
 		}
-	}]
+	}] {
+		global.request++;
+		println@Console("Request#"+global.request+" : Effettuo il versioning di una nuova richiesta di push repository " )()
+	}
 
 
 	[ push( push_rawList ) ]{
@@ -217,7 +220,8 @@ main
 
 			writeFile@File(push_rawList.file[i])();
 			setLastMod@JavaService(clientVersion)(r)
-		}		
+		};
+		println@Console("[SUCCESSO] : Push della repository è stata eseguita correttamente" )()		
 	}
 
 

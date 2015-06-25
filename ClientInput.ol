@@ -323,7 +323,7 @@ main
                         
                         Server.location = global.root.repo[i].serverAddress;
                         versionStruttura@Server( repo_tree )( pushList );
-                        println@Console( "Attendo risposta server.." )();
+                        //println@Console( "Attendo risposta server.." )();
 
                         {
                             if(#pushList.fileToPush > 0)
@@ -342,7 +342,7 @@ main
 
                                     file.filename = sub_res+pushList.fileToPush[k];
 
-                                    println@Console( file.filename )();
+                                    //println@Console( file.filename )();
                                     file.format = format = "binary";
 
                                     readFile@File(file)(file.content);
@@ -356,7 +356,7 @@ main
                                     undef( file.format );
                                     rawList.file[#rawList.file] << file;
 
-                                    println@Console( file.version )();
+                                    //println@Console( file.version )();
                                     //Rimuovo i campi non voluti dal servizio ReadFile@File
                                     undef( file.content );
                                     undef( file.version )
@@ -427,6 +427,7 @@ main
                             undef( tmpRepo );
 
                             repoFlag = false;
+
                             //Controllo se ho la repo registrata localmente
                             for(j=0, j<#global.root.repo && !repoFlag, j++)
                             {
@@ -456,7 +457,6 @@ main
                                         while( !pathFlag )
                                         {
                                             print@Console( "Inserisci il path > " )();
-                                            registerForInput@Console()();
                                             in( temp_path );
                                             mkdir@File(temp_path)(pathFlag);
 
@@ -508,6 +508,10 @@ main
             }
         }
 
+        else if (command.result[0] == "test")
+        {
+            println@Console( "" )()
+        }
         /*  Se non ricevo un comando di quelli definiti, informo l'utente che il comando
             non è stato riconosciuto.   */
   		else
