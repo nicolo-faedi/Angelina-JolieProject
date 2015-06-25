@@ -107,7 +107,7 @@ main
   		    }
   		    else
   		    {
-  		        println@Console("[ATTENZIONE]: Nessun server salvato\n")()
+  		        println@Console("[ATTENZIONE]: Nessun server salvato")()
   		    }
   		}
 
