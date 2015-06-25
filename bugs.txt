@@ -1,2 +1,6 @@
 - controllare addServer quando il parametro ip non è corretto - si impalla
-- Controllare la PULL, quando il client non ha la repository in locale, si impalla il Loop delle richieste di creazione. Se la repository esiste invia correttamente la struttura al server.
+- Controllare la PULL, quando il client non ha la repository in locale, si impalla il Loop delle richieste di          creazione. Se la repository esiste invia correttamente la struttura al server.
+- controllare stampa listserver per rimuovere \n
+- // RISOLTO  controllare list new repos quando non ci sono new repos 
+- help accosato a sinistra
+- su tutti i comandi quando c'è un parametro mancante non deve crashare
