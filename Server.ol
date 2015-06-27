@@ -13,7 +13,8 @@ constants {
 }
 
 interface Interfaccia {
-    RequestResponse:    setLastMod( SetVersion )( string )
+    RequestResponse:    setLastMod( SetVersion )( string ),
+    					fileToValue( Repo )( Repo )
 }
 
 outputPort Locale {
@@ -238,16 +239,53 @@ main
 
 
 
+	[ pullRequest ( repoToPullName )( StrutturaRepoServer ) {
+
+		repoTrovata = false;
+		// Cerco se la repo è presente tra quelle del server
+		for(j=0, j<#global.root.repo && !repoTrovata, j++)
+                    {
+                        if(global.root.repo[j].name == repoToPullName )
+                        {
+                            repoTrovata = true
+                        }
+                    };
+        
+        if ( !repoTrovata ){
+        	StrutturaRepoServer = "NonTrovata";
+        	StrutturaRepoServer.relativePath = "Stocaxxo"
+        }
+
+        else {
+
+        	println@Console( j )();
+        	currentRepo = global.root.repo[ j -1 ].path;
+        	currentRepo.relativePath = repoToPullName;
+
+
+        	println@Console( currentRepo )();
+        	// currentRepo = global.root.repo[ j - 1 ].name;
+
+        	println@Console( currentRepo.relativePath )();
+        	fileToValue@Locale( currentRepo )( StrutturaRepo );
+        	StrutturaRepoServer << StrutturaRepo;
+        	valueToPrettyString@StringUtils( StrutturaRepoServer )( res );
+        	println@Console( res )()
+        }
+
+
+	}
+
+	]
+
 	/*
 
 	*/
-	[ pull( repo )( pull_rawList ) {
+	[ pull( toPullList )( pull_rawList ) {
 
-		valueToPrettyString@StringUtils(repo)(asdf);
-		println@Console( asdf )()
+		//QUI PUSH
 		
 	}]
 
 
 }
-
