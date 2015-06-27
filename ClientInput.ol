@@ -375,7 +375,7 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
                         if(#pushList.fileToPush > 0)
                         {
                         
-                            for(k=0, k<#pushList.fileToPush, k++)
+                            for(k=0, k < #pushList.fileToPush, k++)
                             {
                                 
                                 //Elimino dall'absolute path il reponame e aggiungo il relative path del file
@@ -396,7 +396,7 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
                                 file.filename = pushList.fileToPush[k];
 
                                 //Ottengo la versione del file in esame
-                                getLastModString@JavaService (sub_res+pushList.fileToPush[k])( v );
+                                getLastModString@JavaService ( sub_res + pushList.fileToPush[k] )( v );
                                 file.version = long(v);
 
                                 undef( file.format );
@@ -445,53 +445,53 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
     {
         //command.result[1] = serverName;
         //command.result[2] = repoName
-        repoFlag = false;
-        serverFlag = false;
-        for(i=0, i<#global.root.server && !serverFlag, i++)
+        repoTrovata = false;
+        serverTrovato = false;
+
+        // Cerco se esiste il Server
+        for(i=0, i<#global.root.server && !serverTrovato, i++)
         {
+            // Se il server è registrato
             if(global.root.server.name == command.result[1])
             {
-                serverFlag = true;
+                serverTrovato = true;
                 scope( fault_connection )
                 {
                     //Contatto il server
                     install( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
                     Server.location = global.root.server.address;
-                    //Ottengo la serverRegRepoList
-                    getServerRepoList@Server()( serverRepoList );
-                    
-                    //Cerco la repository pullata sul server
-                    for(j=0, j<#serverRepoList.repo && !repoFlag, j++)
-                    {
-                        if(serverRepoList.repo[j].name == command.result[2])
-                        {
-                            repoFlag = true
-                        }
+
+                    // Invio una richiesta al server e mi ritorna la sua struttura della repo
+                    pullRequest@Server( command.result[2] )( serverRepo_tree );
+
+                    // Se la repo non è presente sul server
+                    if (serverRepo_tree != "NonTrovata") {
+                        repoTrovata = true
                     };
 
                     //Se è presente sul server continuiamo
-                    if(repoFlag)
+                    if(repoTrovata)
                     {
 
                         undef( tmpRepo );
 
-                        repoFlag = false;
+                        repoClientTrovata = false;
 
                         //Controllo se ho la repo registrata localmente
-                        for(j=0, j<#global.root.repo && !repoFlag, j++)
+                        for(j=0, j<#global.root.repo && !repoClientTrovata, j++)
                         {
                             if(global.root.repo[j].name == command.result[2])
                             {
                                 tmpRepo = global.root.repo[j].path;
                                 tmpRepo.relativePath = global.root.repo[j].name; 
-                                repoFlag = true
+                                repoClientTrovata = true
                             }
                         };
 
 
                         pullFlag = true;
 
-                        if(!repoFlag)
+                        if( !repoClientTrovata )
                         {
                             while( conferma != "Y" )
                             {
@@ -536,14 +536,107 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
                             }
                         };
 
+                        println@Console( tmpRepo )();
+
+                        abPath = tmpRepo;
+
+                        //Elimino dall'absolute path il reponame e aggiungo il relative path del file
+                        length@StringUtils( abPath )(absoluteLength);
+                        length@StringUtils( command.result[2] )(reponameLength);
+                        sub_request = tmpRepo;
+                        sub_request.begin = 0;
+                        sub_request.end = absoluteLength - reponameLength;
+                        substring@StringUtils(sub_request)(sub_res);
+                        path = sub_res;
+                        println@Console( path )();
+
                         //QUA EFFETTUO LA PULL
                         if(pullFlag)
-                        {
-                            fileToValue@Locale(tmpRepo)(repoToPull);
-                            pull@Server(repoToPull)(pullRawList)
+                        {   
+                            println@Console( "SERVER-repo-tree: "+serverRepo_tree )();
 
-                            //Scrivo i file
+                            // Visita in ampiezza della repo_tree inviata dal server per
+                            // creare la fileToPull list
+                            coda[0] << serverRepo_tree;
+                            dim = #coda;
 
+                            while(dim > 0)
+                            {
+                                undef( tmpRoot );
+                                tmpRoot << coda[0];
+
+                                undef( coda[0] );
+                                dim = #tmpRoot;
+                                println@Console( "#tmproot: "+#tmpRoot )();
+                                {
+                                    // Scorro le sottocartelle
+                                    for(i=0, i<#tmpRoot.repo, i++)
+                                    {
+                                        coda[#coda] << tmpRoot.repo[i];
+                                        repo_path = path+tmpRoot.repo[i].relativePath;
+                                        exists@File(repo_path)(esiste);
+
+                                        // Se la sottodirectory non esiste la creo nella repo del client
+                                        if(!esiste)
+                                        {
+                                            mkdir@File( repo_path )( mkdir_response )
+                                        }
+                                    }
+
+                                        |
+
+                                    // Scorro tutti i file
+                                    for(j=0, j<#tmpRoot.file, j++)
+                                    {
+                                        // Trasformo il path relativo in assoluto
+                                        file_path = path+tmpRoot.file[j].relativePath;
+
+                                        // Verifico l'esistenza del file
+                                        exists@File( file_path )( fileEsiste );
+                                        if( fileEsiste )
+                                        {   
+                                            // Ottengo la versione del file in locale e la confronto con quella del server
+                                            getLastModString@JavaService( file_path )( c_version );
+
+                                            client_version = long(c_version);
+                                            server_version = tmpRoot.file[j].version;
+
+                                            if( client_version < server_version )
+                                            {
+                                                list.fileToPull[ #list.fileToPull ] = tmpRoot.file[ j ].relativePath
+                                            }
+
+                                            else if ( client_version > server_version )
+                                            {
+                                                list.fileToPush[ #list.fileToPush ] = tmpRoot.file[ j ].relativePath
+                                            }
+                                        }
+
+                                        // Se il file non è c'è in locale del client è sicuramente da pullare
+                                        else
+                                        {
+                                            list.fileToPull[ #list.fileToPull ] = tmpRoot.file[j].relativePath
+                                        }
+
+                                    }
+                                };
+
+                                dim = #coda
+
+                            };
+
+
+                            println@Console(" FILE TO PULL")();
+                            for ( k = 0, k < #list.fileToPull, k++){   // nomi da modificare 
+                                println@Console( list.fileToPull[k] )()
+                            };
+
+                            println@Console(" FIlES TO PUSH: ")();
+                            for ( k = 0, k < #list.fileToPush, k++){
+                                println@Console( list.fileToPush[k] )()
+                            }
+
+                            pull@Server( list )( rawList )
                         }
                     }
                     else
