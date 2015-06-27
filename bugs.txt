@@ -5,3 +5,4 @@
 - // RISOLTO help accosato a sinistra
 - su tutti i comandi quando c'è un parametro mancante non deve crashare
 - da gestire vuoi creare?(Y/N) - N
+- quando si fa add repository e si da alla repo un repoName diverso da quello della cartella della repo l add va a buon fine mentre poi la push da errore (bisogna avvisare l utente di chiamare la repo nello stesso modo oppure gestire la cosa)
