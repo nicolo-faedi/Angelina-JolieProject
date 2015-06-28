@@ -258,15 +258,15 @@ main
 
         else {
 
-        	println@Console( j )();
+        	//println@Console( j )();
         	currentRepo = global.root.repo[ j -1 ].path;
         	currentRepo.relativePath = repoToPullName;
 
 
-        	println@Console( currentRepo )();
+        	//println@Console( currentRepo )();
         	// currentRepo = global.root.repo[ j - 1 ].name;
 
-        	println@Console( currentRepo.relativePath )();
+        	//println@Console( currentRepo.relativePath )();
         	fileToValue@Locale( currentRepo )( StrutturaRepo );
         	StrutturaRepoServer << StrutturaRepo;
         	valueToPrettyString@StringUtils( StrutturaRepoServer )( res );
@@ -274,16 +274,36 @@ main
         }
 
 
-	}
+	}]
 
-	]
+	
+	
 
-	/*
+	
+	[ pull( PullList )( pull_rawList ) {
+		println@Console(" OK ")();
+		for( i = 0, i < #PullList.fileToPull, i++ ){
+			println@Console( PullList.fileToPull[ i ] )() ;
+			// Assegno a filename il path assoluto su server
+			file.filename = "Servers/"+S_NAME+"/"+PullList.fileToPull[ i ];
+			println@Console(file.filename)();
+			// Assegno format per trasformare in raw
+			file.format = format = "binary"; 
+			readFile@File(file)( file.content );
 
-	*/
-	[ pull( toPullList )( pull_rawList ) {
+			undef( file.format );
 
-		//QUI PUSH
+			getLastModString@JavaService ( file.filename )( version );
+			file.version = long( version );
+			file.filename = PullList.fileToPull[ i ];
+
+			pull_rawList.file[ #pull_rawList.file ] << file;
+
+			//Rimuovo i campi non voluti dal servizio ReadFile@File
+            undef( file.content );
+            undef( file.version )
+
+		}
 		
 	}]
 
