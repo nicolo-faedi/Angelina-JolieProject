@@ -391,7 +391,7 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
                                 //println@Console( file.filename )();
                                 file.format = format = "binary";
 
-                                readFile@File(file)(file.content);
+                                readFile@File(file)(file.content); 
 
                                 file.filename = pushList.fileToPush[k];
 
@@ -634,9 +634,19 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
                             println@Console(" FIlES TO PUSH: ")();
                             for ( k = 0, k < #list.fileToPush, k++){
                                 println@Console( list.fileToPush[k] )()
-                            }
+                            };
+                            PullList = void ;
+                            PullList.fileToPull << list.fileToPull;
 
-                            pull@Server( list )( rawList )
+                            pull@Server( PullList )( rawList );
+                            println@Console( "FILes RAW: " )();
+                            for ( k = 0, k < #rawList.file , k++ ){
+                                println@Console( rawList.file[ k ].filename )();
+
+                                
+                            };
+
+                            println@Console( "PULL LIST INVIATA" )()
                         }
                     }
                     else
