@@ -9,7 +9,7 @@ include "queue_utils.iol"
 constants {
 	S_LOCATION = "socket://localhost:8000",
 	S_NAME = "Server1",
-	Timer_wait = 4000
+	Timer_wait = 0
 }
 
 interface Interfaccia {
@@ -217,6 +217,29 @@ main
 	}
 
 
+	[ delete( repoName ) ] {
+		repoTrovata = false;
+		for( i=0 , i<#global.root.repo && !repoTrovata, i++)
+		{
+			if(global.root.repo[i].name == repoName)
+			{
+				repoTrovata = true;
+
+				tempName = global.root.repo[i].name;
+				tempRelativePath = "Servers/"+S_NAME+"/"+tempName;
+				
+				undef( global.root.repo[i] );
+				updateXml@Locale(global.root)(r);
+
+				deleteDir@File(tempRelativePath)(deleteRes);
+				if(deleteRes)
+				{
+					global.request++;
+					println@Console("Request#"+global.request+" : Un utene ha eliminato la repository "+tempName )()
+				}
+			}
+		}
+	}
 
 	/*
 
@@ -244,49 +267,34 @@ main
 		repoTrovata = false;
 		// Cerco se la repo è presente tra quelle del server
 		for(j=0, j<#global.root.repo && !repoTrovata, j++)
-                    {
-                        if(global.root.repo[j].name == repoToPullName )
-                        {
-                            repoTrovata = true
-                        }
-                    };
+        {
+            if(global.root.repo[j].name == repoToPullName )
+            {
+                repoTrovata = true
+            }
+        };
         
-        if ( !repoTrovata ){
+        if ( !repoTrovata )
+        {
         	StrutturaRepoServer = "NonTrovata";
-        	StrutturaRepoServer.relativePath = "Stocaxxo"
+        	StrutturaRepoServer.relativePath = ""
         }
-
-        else {
-
-        	//println@Console( j )();
+        else 
+        {
         	currentRepo = global.root.repo[ j -1 ].path;
         	currentRepo.relativePath = repoToPullName;
-
-
-        	//println@Console( currentRepo )();
-        	// currentRepo = global.root.repo[ j - 1 ].name;
-
-        	//println@Console( currentRepo.relativePath )();
         	fileToValue@Locale( currentRepo )( StrutturaRepo );
-        	StrutturaRepoServer << StrutturaRepo;
-        	valueToPrettyString@StringUtils( StrutturaRepoServer )( res );
-        	println@Console( res )()
+        	StrutturaRepoServer << StrutturaRepo
         }
 
 
 	}]
 
 	
-	
-
-	
 	[ pull( PullList )( pull_rawList ) {
-		println@Console(" OK ")();
 		for( i = 0, i < #PullList.fileToPull, i++ ){
-			println@Console( PullList.fileToPull[ i ] )() ;
 			// Assegno a filename il path assoluto su server
 			file.filename = "Servers/"+S_NAME+"/"+PullList.fileToPull[ i ];
-			println@Console(file.filename)();
 			// Assegno format per trasformare in raw
 			file.format = format = "binary"; 
 			readFile@File(file)( file.content );

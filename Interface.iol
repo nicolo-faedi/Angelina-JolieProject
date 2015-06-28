@@ -61,7 +61,8 @@ interface ClientInterface {
   						pull ( PullList )( RawList )
 
   	OneWay:				addRepository( RegRepo ),
-  						push( RawList )
+  						push( RawList ),
+  						delete( string )
 }
 
 interface LocalInterface {

@@ -466,11 +466,11 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
 
                     // Se la repo non è presente sul server
                     if (serverRepo_tree != "NonTrovata") {
-                        repoTrovata = true
+                        repoServerTrovata = true
                     };
 
                     //Se è presente sul server continuiamo
-                    if(repoTrovata)
+                    if(repoServerTrovata)
                     {
 
                         undef( tmpRepo );
@@ -493,67 +493,79 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
 
                         if( !repoClientTrovata )
                         {
-                            while( conferma != "Y" )
+                            creazione = false;
+                            while( !creazione )
                             {
-                                print@Console( "[ATTENZIONE] : La repo richiesta non è presente localmente, vuoi crearla? [Y/N] \n" )();
+                                print@Console( "[ATTENZIONE] : La repo richiesta non è presente localmente, vuoi crearla? [Y/N] \n> " )();
                                 in( conferma );
-                                println@Console( "CONFERMA : "+conferma )();
-                                if( conferma == "Y")
+                                if( conferma == "Y" || conferma == "y" )
                                 {
+                                    creazione = true;
                                     pathFlag = false;
+
                                     println@Console( "Dove vuoi creare la repository? " )();
                                     while( !pathFlag )
                                     {
                                         print@Console( "Inserisci il path > " )();
-                                        in( temp_path );
-                                        mkdir@File(temp_path+"/"+command.result[2])(pathFlag);
+                                        in( tmpRepo );
+                                        mkdir@File(tmpRepo+"/"+command.result[2])(pathFlag);
 
                                         //Se creo correttamente la repository la aggiungo a struttura e aggiorno l'xml
                                         if(pathFlag)
                                         {
-                                            tmp.name = command.result[2];
-                                            tmp.path = temp_path;
-                                            tmp.serverName = command.result[1];
-                                            tmp.serverAddress = global.root.server[i].address;
+                                            tmpRepo = tmpRepo+"/"+command.result[2];
+                                            tmpRepo.relativePath = command.result[2]; 
+
+
+                                            with( tmp ){
+                                              .name = tmpRepo.relativePath;
+                                              .path = tmpRepo;
+                                              .serverName = command.result[1];
+                                              .serverAddress = global.root.server[i].address
+                                            };
+
                                             global.root.repo[#global.root.repo] << tmp;
                                             updateXml@Locale(global.root)(xmlUpdate_res);
 
-                                            tmpRepo = global.root.repo[#global.root.repo-1].path;
-                                            tmpRepo.relativePath = global.root.repo[#global.root.repo-1].name; 
 
-                                            println@Console( "[SUCCESSO] : La repository è stata creata ('"+temp_path+"')" )()
+                                            println@Console( "[SUCCESSO] : La repository è stata creata ('"+tmpRepo+"')" )();
+                                            pullFlag = true
                                         }
                                         else
                                         {
                                             println@Console( "[ATTENZIONE] : Path non valido" )()
                                         }
                                     }
+
                                 }
-                                else
+                                else if(conferma == "n" || conferma == "N")
                                 {
+                                    creazione = true;
                                     pullFlag = false
                                 }
                             }
                         };
 
-                        println@Console( tmpRepo )();
-
-                        abPath = tmpRepo;
-
-                        //Elimino dall'absolute path il reponame e aggiungo il relative path del file
-                        length@StringUtils( abPath )(absoluteLength);
-                        length@StringUtils( command.result[2] )(reponameLength);
-                        sub_request = tmpRepo;
-                        sub_request.begin = 0;
-                        sub_request.end = absoluteLength - reponameLength;
-                        substring@StringUtils(sub_request)(sub_res);
-                        path = sub_res;
-                        println@Console( path )();
+                        
 
                         //QUA EFFETTUO LA PULL
                         if(pullFlag)
                         {   
-                            println@Console( "SERVER-repo-tree: "+serverRepo_tree )();
+                            //Elimino dall'absolute path il reponame e aggiungo il relative path del file
+                            absPath = tmpRepo;
+                            relPath = tmpRepo.relativePath;
+
+
+                            length@StringUtils( absPath )(absoluteLength);
+                            length@StringUtils( relPath )(reponameLength);
+                            sub_request = absPath;
+                            sub_request.begin = 0;
+                            sub_request.end = absoluteLength - reponameLength;
+                            substring@StringUtils(sub_request)(sub_res);
+                            
+
+                            path = sub_res;
+                            println@Console( path )();
 
                             // Visita in ampiezza della repo_tree inviata dal server per
                             // creare la fileToPull list
@@ -567,7 +579,6 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
 
                                 undef( coda[0] );
                                 dim = #tmpRoot;
-                                println@Console( "#tmproot: "+#tmpRoot )();
                                 {
                                     // Scorro le sottocartelle
                                     for(i=0, i<#tmpRoot.repo, i++)
@@ -626,27 +637,21 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
                             };
 
 
-                            println@Console(" FILE TO PULL")();
-                            for ( k = 0, k < #list.fileToPull, k++){   // nomi da modificare 
-                                println@Console( list.fileToPull[k] )()
-                            };
+                            clientPullList.fileToPull << list.fileToPull;
 
-                            println@Console(" FIlES TO PUSH: ")();
-                            for ( k = 0, k < #list.fileToPush, k++){
-                                println@Console( list.fileToPush[k] )()
-                            };
-                            PullList = void ;
-                            PullList.fileToPull << list.fileToPull;
-
-                            pull@Server( PullList )( rawList );
-                            println@Console( "FILes RAW: " )();
+                            pull@Server( clientPullList )( rawList );
                             for ( k = 0, k < #rawList.file , k++ ){
-                                println@Console( rawList.file[ k ].filename )();
+                                rawList.file[k].filename = path+rawList.file[k].filename;
 
+                                serverVersion.path = rawList.file[k].filename;
+                                serverVersion.version = rawList.file[k].version;
+                                undef(rawList.file[k].version);
+
+                                writeFile@File(rawList.file[k])();
+                                setLastMod@JavaService(serverVersion)(r)
                                 
                             };
-
-                            println@Console( "PULL LIST INVIATA" )()
+                            println@Console( "[SUCCESSO] : Pull effettuata correttamente" )()
                         }
                     }
                     else
@@ -660,7 +665,41 @@ delete [serverName] [repoName]                      Rimuove il repository dai re
     }
 
 
-
+    /* */
+    else if ( command.result[0] == "delete" )
+    {
+        {
+            
+            repoTrovata = false;
+            for( i=0, i<#global.root.repo && !repoTrovata, i++ )
+            {
+                if( ( global.root.repo[i].serverName == command.result[1] ) && ( global.root.repo[i].name == command.result[2] ) )
+                {
+                    repoTrovata = true;
+                    scope( fault_connection )
+                    {
+                        install( IOException => println@Console( "[ATTENZIONE] : La repository non è stata rimossa dal server, perché non è raggiungibile. " )() );
+                        Server.location = global.root.repo[i].serverAddress;
+                        delete@Server(command.result[2])
+                    }
+                    |
+                    {
+                        deleteDir@File(global.root.repo[i].path)(deleteRes);
+                        if(deleteRes)
+                        {
+                            undef( global.root.repo[i] );
+                            updateXml@Locale(global.root)(r);
+                            println@Console( "[SUCCESSO] : La repository è stata eliminata con successo dal computer" )()
+                        }
+                        else
+                        {
+                            println@Console( "[ATTENZIONE] : La repository NON è stata eliminata con successo dal computer" )()
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     else if (command.result[0] == "test")
     {
