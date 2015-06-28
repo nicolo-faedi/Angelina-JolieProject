@@ -34,6 +34,10 @@ type PushList: void {
 	.fileToPull[0 , *]: string
 }
 
+type PullList: void {
+	.fileToPull[0 , *]: string
+}
+
 type RawList: void {
 	.file[1 , *]: FileRequestType
 }
@@ -53,7 +57,8 @@ interface ClientInterface {
   	RequestResponse:	addServer( Server )( bool ),
   						getServerRepoList( void )( Struttura ),
   						versionStruttura( Repo )( PushList ),
-  						pull( Repo )( RawList )
+  						pullRequest ( string )( Repo ),
+  						pull ( PullList )( RawList )
 
   	OneWay:				addRepository( RegRepo ),
   						push( RawList )
