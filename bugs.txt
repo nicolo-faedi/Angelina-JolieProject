@@ -7,3 +7,4 @@
 - da gestire vuoi creare?(Y/N) - N
 - quando si fa add repository e si da alla repo un repoName diverso da quello della cartella della repo l add va a buon fine mentre poi la push da errore (bisogna avvisare l utente di chiamare la repo nello stesso modo oppure gestire la cosa)
 - quando una push va a buon fine non c'è una conferma che sia andata a buon fine per l utente ma solo un messaggio successo la pushrequest è stata inviata; ci si aspetta di ricevere un messaggio tipo pushrequest effettuata con successo che però non arriva mai
+- nel FileToValue inizialmente otteniamo solo le directory quindi ci sarebbe da modificare il commento
