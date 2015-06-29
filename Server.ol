@@ -12,11 +12,6 @@ constants {
 	Timer_wait = 0
 }
 
-interface Interfaccia {
-    RequestResponse:    setLastMod( SetVersion )( string ),
-    					fileToValue( Repo )( Repo )
-}
-
 outputPort Locale {
 	Protocol: sodep
 	Interfaces: LocalInterface
@@ -41,27 +36,52 @@ embedded {
 init
 {
 	global.requests = 0;
-	readXml@Locale( "Servers/"+S_NAME )( tree );
-	global.root << tree;
-
+	readXml@Locale( "Servers/"+S_NAME )( global.root );
+	semafori;
 
 	println@Console("SERVER AVVIATO
 >Name: "+S_NAME+"
 >Address: "+S_LOCATION+"
 >Repositories: "+#global.root.repo+"
-Attendo richieste...")();
-
-	semafori
-	
+Attendo richieste...")()
 
 }
 
 define semafori
 {
-  	//SEMAFORI
-	sRequest.name = "xmlRes";
-	sRequest.permits = 1;
-	release@SemaphoreUtils(sRequest)(sResponse)
+  	{
+  		//Creo un semaforo per la concorrenza sul file xml
+		sXmlRequest.name = "xmlRes";
+		sXmlRequest.permits = 1;
+		release@SemaphoreUtils(sXmlRequest)(sXmlResponse)
+	}
+		|
+	{
+		//Creo un semaforo per la concorrenza sull'intera lista global.root
+		sRootRequest.name = "rootRes";
+		sRootRequest.permits = 1;
+		release@SemaphoreUtils(sRootRequest)(sRootResponse)
+	}
+		|
+	{
+		//Creo un semaforo per ogni global.root.repo
+		with( global.root )
+		{
+		  	for(i=0, i<#.repo, i++)
+		  	{
+		  		println@Console( .repo[i].name )();
+		  		with( .repo[i] ){
+		  		  .sDB.name = global.root.repo[i].name;
+		  		  .sDB.permits = 1;
+		  		  release@SemaphoreUtils(.sDB)(sResponse);
+		  		  .sMutex.name = global.root.repo[i].name;
+		  		  .sMutex.permits = 1;
+		  		  release@SemaphoreUtils(.sMutex)(sResponse)
+		  		}
+		  	}
+		}
+		
+	}
 
 }
 
@@ -94,7 +114,7 @@ main
 			flag = false;
 			while(!flag)
 			{
-				acquire@SemaphoreUtils(sRequest)(sResponse);
+				acquire@SemaphoreUtils(sXmlRequest)(sResponse);
 				if(sResponse)
 				{
 					sleep@Time(Timer_wait)();
@@ -109,9 +129,16 @@ main
 				
 					if(!a)
 					{
+						//Creo il nuovo semaforo per la nuova repository
+						regRepo.sRequest.name = regRepo.name;
+						regRepo.sRequest.permits = 1;
+						//Aggiungo la repository alla struttura
 						global.root.repo[#global.root.repo] << regRepo;
+						//Aggiorno l'xml
 						updateXml@Locale(global.root)(r);
+						//Creo il path della repository
 						mkdir@File( regRepo.path )( response );
+						//Aggiorno le richieste
 						global.request++;
 						println@Console("Request#"+global.request+" : Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )()
 						
@@ -122,7 +149,7 @@ main
 						println@Console("Request#"+global.request+" : Un utente ha provato ad aggiungere una repository già presente" )()
 					};
 
-					release@SemaphoreUtils(sRequest)(sResponse);
+					release@SemaphoreUtils(sXmlRequest)(sResponse);
 					flag = true
 				}
 			}
@@ -143,7 +170,7 @@ main
 	/*
 
 	*/
-	[ versionStruttura( repo_tree )( list ) {
+	[ pushRequest( repo_tree )( list ) {
 		flag = false;
 		//Ottengo la struttura relativa alla repo inviata dal client
 		//Cerco tra le regRepos Server
@@ -216,31 +243,6 @@ main
 		println@Console("Request#"+global.request+" : Effettuo il versioning di una nuova richiesta di push repository " )()
 	}
 
-
-	[ delete( repoName ) ] {
-		repoTrovata = false;
-		for( i=0 , i<#global.root.repo && !repoTrovata, i++)
-		{
-			if(global.root.repo[i].name == repoName)
-			{
-				repoTrovata = true;
-
-				tempName = global.root.repo[i].name;
-				tempRelativePath = "Servers/"+S_NAME+"/"+tempName;
-				
-				undef( global.root.repo[i] );
-				updateXml@Locale(global.root)(r);
-
-				deleteDir@File(tempRelativePath)(deleteRes);
-				if(deleteRes)
-				{
-					global.request++;
-					println@Console("Request#"+global.request+" : Un utene ha eliminato la repository "+tempName )()
-				}
-			}
-		}
-	}
-
 	/*
 
 	*/
@@ -259,7 +261,6 @@ main
 		};
 		println@Console("[SUCCESSO] : Push della repository è stata eseguita correttamente" )()		
 	}
-
 
 
 	[ pullRequest ( repoToPullName )( StrutturaRepoServer ) {
@@ -315,5 +316,28 @@ main
 		
 	}]
 
+	[ delete( repoName ) ] {
+		repoTrovata = false;
+		for( i=0 , i<#global.root.repo && !repoTrovata, i++)
+		{
+			if(global.root.repo[i].name == repoName)
+			{
+				repoTrovata = true;
+
+				tempName = global.root.repo[i].name;
+				tempRelativePath = "Servers/"+S_NAME+"/"+tempName;
+				
+				undef( global.root.repo[i] );
+				updateXml@Locale(global.root)(r);
+
+				deleteDir@File(tempRelativePath)(deleteRes);
+				if(deleteRes)
+				{
+					global.request++;
+					println@Console("Request#"+global.request+" : Un utene ha eliminato la repository "+tempName )()
+				}
+			}
+		}
+	}
 
 }

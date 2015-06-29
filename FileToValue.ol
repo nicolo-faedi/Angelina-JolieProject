@@ -3,11 +3,6 @@ include "file.iol"
 include "Interface.iol"
 include "string_utils.iol"
 
-interface Interfaccia {
-	RequestResponse:	fileToValue( Repo )( Repo ),
-						getLastModString(string)(string)
-}
-
 outputPort Out {
 	Location: "local"
 	Interfaces: LocalInterface
