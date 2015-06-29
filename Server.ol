@@ -59,7 +59,7 @@ define semafori
 		release@SemaphoreUtils(sRootRequest)(sRootResponse);
 
 		sRootMutex.name = "rootMutex";
-		sRootMutex.permits = 1;
+		sRootMutex.permits = 0;
 		release@SemaphoreUtils(sRootMutex)(sRootResponse)
 	}
 		|
@@ -74,17 +74,19 @@ define semafori
 
   		  	global.root.repo[i].sMutex.name = global.root.repo[i].name+"-mutex";
   		 	global.root.repo[i].sMutex.permits = 1;
-  		  	release@SemaphoreUtils(global.root.repo[i].sMutex)(sResponse)
-  		  	global.root.repo[i].readerCount = 0;
+  		  	release@SemaphoreUtils(global.root.repo[i].sMutex)(sResponse);
+
+  		  	global.root.repo[i].readerCount = 0
 	  	}
 	}
 }
 
 define startReadRoot
 {
+	println@Console( "START READ ROOT" )();
 	acquire@SemaphoreUtils(sRootMutex)(sRootResponse);
 	global.rootReaderCount++;
-	if(rootReaderCount == 1)
+	if(global.rootReaderCount == 1)
 	{
 		acquire@SemaphoreUtils(sRootRequest)(sRootResponse)
 	};
@@ -95,7 +97,7 @@ define endReadRoot
 {
 	acquire@SemaphoreUtils(sRootMutex)(sRootResponse);
 	global.rootReaderCount--;
-	if(rootReaderCount == 0)
+	if(global.rootReaderCount == 0)
 	{
 		release@SemaphoreUtils(sRootRequest)(sRootResponse)
 	};
@@ -112,6 +114,40 @@ define endWriteRoot
 {
 
 	release@SemaphoreUtils(sRootRequest)(sRootResponse)
+}
+
+define startReadRepo
+{
+	acquire@SemaphoreUtils(global.root.repo[i].sMutex)(sRepoResponse);
+	global.root.repo[i].readerCount++;
+	if(global.root.repo[i].readerCount == 1)
+	{
+		acquire@SemaphoreUtils(global.root.repo[i].sDB)(sRepoResponse)
+	};
+	release@SemaphoreUtils(global.root.repo[i].sMutex)(sRepoResponse)
+}
+
+define endReadRepo
+{
+  	acquire@SemaphoreUtils(global.root.repo[i].sMutex)(sRepoResponse);
+  	global.root.repo[i].readerCount--;
+  	if(global.root.repo[i].readerCount == 0)
+  	{
+  		release@SemaphoreUtils(global.root.repo[i].sDB)(sRepoResponse)
+  	};
+  	release@SemaphoreUtils(global.root.repo[i].sMutex)(sRepoResponse)
+}
+
+define startWriteRepo
+{
+
+  	acquire@SemaphoreUtils(global.root.repo[i].sDB)(sRepoResponse)
+}
+
+define endWriteRepo
+{
+
+	release@SemaphoreUtils(tempSemaforo)(sRepoResponse)
 }
 
 execution { concurrent }
@@ -136,8 +172,9 @@ main
 
 		regRepo.path = "Servers/"+S_NAME+"/"+regRepo.name;
 
-		//Verifico se posso acquisire il semaforo su global.root
-		startReadRoot;
+		//Acquisisco il lock per poter scrivere in global.root
+		startWriteRoot;
+
 		println@Console( "ADD REPOSITORY: Inizio a leggere..." )();
 		sleep@Time(Timer_wait)();
 
@@ -150,8 +187,6 @@ main
 			}
 		};
 
-		//Rilascio il semaforo sul reader di global.root
-		endReadRoot;
 		println@Console( "ADD REPOSITORY: Ho finito di leggere" )();
 		
 		if(!a)
@@ -159,12 +194,12 @@ main
 			//Creo il nuovo semaforo per la nuova repository
 			regRepo.sDB.name = regRepo.name;
 			regRepo.sDB.permits = 1;
+			release@SemaphoreUtils(regRepo.sDB)(sRepoResponse);
 
 			regRepo.sMutex.name = regRepo.name+"-mutex";
 			regRepo.sMutex.permits = 1;
+			release@SemaphoreUtils(regRepo.sMutex)(sRepoResponse);
 
-			//Acquisisco il lock per poter scrivere in global.root
-			startWriteRoot;
 			
 			println@Console( "ADD REPOSITORY: Inizio a scrivere..." )();
 			sleep@Time(Timer_wait)();
@@ -188,15 +223,16 @@ main
 				println@Console("Request#"+global.request+" : Un utente ha provato ad aggiungere una repository appena creata da un altro utente" )()
 			};
 
-			//Rilascio il lock a scrittura ultimata
-			endWriteRoot;
 			println@Console( "ADD REPOSITORY: Scrittura Finita" )()
 		}
 		else
 		{
 			global.request++;
 			println@Console("Request#"+global.request+" : Un utente ha provato ad aggiungere una repository già presente" )()
-		}
+		};
+
+		//Rilascio il lock a scrittura ultimata
+		endWriteRoot
 	} 
 
 	
@@ -231,12 +267,16 @@ main
 			if(repo_tree == global.root.repo[i].name)
 			{
 				//Verifico se posso acquisire il lock sulla repo da aggiornare
-				acquire@SemaphoreUtils(global.root.repo[i].sDB)(sRepoResponse);
+				startWriteRepo;
+
+				endReadRoot;
+
+
 				println@Console( "PUSH REQUEST: Avvio un versioning" )();
 				sleep@Time(Timer_wait)();
 				flag = true;
 				//Rilascio il semaforo sul reader di global.root
-				endReadRoot;
+				
 				//Visita in ampiezza della repo_tree inviata dal client
 				coda[0] << repo_tree;
 				dim = #coda;
@@ -320,9 +360,11 @@ main
 			}
 		};
 
+
 		tempSemaforo.name = push_rawList;
 		tempSemaforo.permits = 1;
-		release@SemaphoreUtils(tempSemaforo)(sRepoResponse);
+
+		endWriteRepo;
 		println@Console("[SUCCESSO] : Push della repository è stata eseguita correttamente" )()		
 	}
 
@@ -335,17 +377,11 @@ main
 		startReadRoot;
 
 		// Cerco se la repo è presente tra quelle del server
-		for(j=0, j<#global.root.repo && !repoTrovata, j++)
+		for(i=0, i<#global.root.repo && !repoTrovata, i++)
         {
-            if(global.root.repo[j].name == repoToPullName )
+            if(global.root.repo[i].name == repoToPullName )
             {
-            	acquire@SemaphoreUtils(global.root.repo[j].sMutex)(sRepoResponse);
-        		global.root.repo[j].readerCount++;
-        		if(global.root.repo[j].readerCount == 1)
-        		{
-        			acquire@SemaphoreUtils(global.root.repo[j].sDB)(sRepoResponse)
-        		};
-        		release@SemaphoreUtils(global.root.repo[j].sMutex)(sRepoResponse)
+            	startReadRepo;
                 repoTrovata = true
             }
         };
@@ -388,23 +424,38 @@ main
 			//Rimuovo i campi non voluti dal servizio ReadFile@File
             undef( file.content );
             undef( file.version )
+		};
 
+		trovata = false;
+		for (i = 0, i <#global.root.repo && !trovata, i++)
+		{
+			if (global.root.repo[i].name == Pulllist)
+			{
+				endReadRepo;
+				trovata = true
+			}
 		}
-		
 	}]
 
 	[ delete( repoName ) ] {
 		repoTrovata = false;
+		
+		startWriteRoot;
+		println@Console( "DELETE: Inizio a cancellare..." )();
+		sleep@Time(Timer_wait)();
 		for( i=0 , i<#global.root.repo && !repoTrovata, i++)
 		{
 			if(global.root.repo[i].name == repoName)
 			{
+				startWriteRepo;
+
 				repoTrovata = true;
 
 				tempName = global.root.repo[i].name;
 				tempRelativePath = "Servers/"+S_NAME+"/"+tempName;
 				
 				undef( global.root.repo[i] );
+
 				updateXml@Locale(global.root)(r);
 
 				deleteDir@File(tempRelativePath)(deleteRes);
@@ -414,7 +465,9 @@ main
 					println@Console("Request#"+global.request+" : Un utene ha eliminato la repository "+tempName )()
 				}
 			}
-		}
+		};
+		endWriteRoot;
+		println@Console( "DELETE: Ho finito" )()
 	}
 
 }

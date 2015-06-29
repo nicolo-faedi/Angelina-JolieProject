@@ -641,7 +641,8 @@ define eseguiComando
 
 
                             clientPullList.fileToPull << list.fileToPull;
-
+                            clientPullList = command.result[2];
+                            
                             pull@Server( clientPullList )( rawList );
                             for ( k = 0, k < #rawList.file , k++ )
                             {
@@ -702,6 +703,10 @@ define eseguiComando
                         }
                     }
                 }
+            };
+            if(!repoTrovata)
+            {
+                println@Console( "[ATTENZIONE] : La repository non è registrata localmente" )()
             }
         }
     }

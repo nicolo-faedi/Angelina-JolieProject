@@ -58,7 +58,7 @@ type Repo: string {
 	le liste di fileToPull e fileToPush.
 */ 
 
-type FileRequest: void {
+type FileRequest: string {
 	.fileToPush[0 , *]: string
 	.fileToPull[0 , *]: string
 }
