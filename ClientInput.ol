@@ -323,7 +323,7 @@ define eseguiComando
                     global.root.repo[#global.root.repo] << tmp;
                     if(res)
                     {
-                        println@Console( "[SUCCESSO]: Ho registrato '"+tmp.name+"'@ "+tmp.serverName)()
+                        println@Console( "[SUCCESSO]: Ho registrato localmente '"+tmp.name+"'@ "+tmp.serverName)()
                     }
                     else
                     {
@@ -377,46 +377,45 @@ define eseguiComando
                     //println@Console( "Attendo risposta server.." )();
 
                     {
-                        if(#pushList.fileToPush > 0)
+                        for(k=0, k < #pushList.fileToPush, k++)
                         {
-                        
-                            for(k=0, k < #pushList.fileToPush, k++)
-                            {
-                                
-                                //Elimino dall'absolute path il reponame e aggiungo il relative path del file
-                                length@StringUtils(global.root.repo[i].path)(absoluteLength);
-                                length@StringUtils(global.root.repo[i].name)(reponameLength);
-                                sub_request = global.root.repo[i].path;
-                                sub_request.begin = 0;
-                                sub_request.end = absoluteLength - reponameLength;
-                                substring@StringUtils(sub_request)(sub_res);
+                            
+                            //Elimino dall'absolute path il reponame e aggiungo il relative path del file
+                            length@StringUtils(global.root.repo[i].path)(absoluteLength);
+                            length@StringUtils(global.root.repo[i].name)(reponameLength);
+                            sub_request = global.root.repo[i].path;
+                            sub_request.begin = 0;
+                            sub_request.end = absoluteLength - reponameLength;
+                            substring@StringUtils(sub_request)(sub_res);
 
-                                file.filename = sub_res+pushList.fileToPush[k];
+                            file.filename = sub_res+pushList.fileToPush[k];
 
-                                //println@Console( file.filename )();
-                                file.format = format = "binary";
+                            //println@Console( file.filename )();
+                            file.format = format = "binary";
 
-                                readFile@File(file)(file.content); 
+                            readFile@File(file)(file.content); 
 
-                                file.filename = pushList.fileToPush[k];
+                            file.filename = pushList.fileToPush[k];
 
-                                //Ottengo la versione del file in esame
-                                getLastModString@JavaService ( sub_res + pushList.fileToPush[k] )( v );
-                                file.version = long(v);
+                            //Ottengo la versione del file in esame
+                            getLastModString@JavaService ( sub_res + pushList.fileToPush[k] )( v );
+                            file.version = long(v);
 
-                                undef( file.format );
-                                rawList.file[#rawList.file] << file;
+                            undef( file.format );
+                            rawList.file[#rawList.file] << file;
 
-                                //println@Console( file.version )();
-                                //Rimuovo i campi non voluti dal servizio ReadFile@File
-                                undef( file.content );
-                                undef( file.version )
-                                
-                            }; 
+                            //println@Console( file.version )();
+                            //Rimuovo i campi non voluti dal servizio ReadFile@File
+                            undef( file.content );
+                            undef( file.version )
+                            
+                        }; 
                             //INVIA I FILE AL SERVER
+                            //Aggiungo a rawList la repository in esame, per rilasciare il suo semaforo sul server.
+                            rawList = global.root.repo[i].name;
                             push@Server(rawList);
                             println@Console( "[SUCCESSO] : La pushRequest è stata inviata al server" )()
-                        }
+                        
                         
                         ;
                             
@@ -644,7 +643,8 @@ define eseguiComando
                             clientPullList.fileToPull << list.fileToPull;
 
                             pull@Server( clientPullList )( rawList );
-                            for ( k = 0, k < #rawList.file , k++ ){
+                            for ( k = 0, k < #rawList.file , k++ )
+                            {
                                 rawList.file[k].filename = path+rawList.file[k].filename;
 
                                 serverVersion.path = rawList.file[k].filename;

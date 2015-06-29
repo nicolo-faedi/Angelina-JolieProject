@@ -34,7 +34,7 @@ type RegRepo: void {
 	.readerCount?: int
 }
 
-type SemaphoreRequest:void { 
+type SemaphoreRequest: void { 
     .name:string
     .permits?:int
 }
@@ -55,7 +55,7 @@ type Repo: string {
 /*
 	Contiene l'elenco dei nomi dei file da trasferire tra Client e Server
 	FileRequest viene generato dalle operazioni di Push o Pull e contiene 
-	le liste di fileToPull e fileToPush. 
+	le liste di fileToPull e fileToPush.
 */ 
 
 type FileRequest: void {
@@ -67,9 +67,12 @@ type FileRequest: void {
 	Contiene il file binario(raw) per ogni file elencato nella FileRequest.
 	Nel caso di una PushRequest, è il pacchetto di file inviato dal Client al Server.
 	Nel caso della PullRequest, è il pacchetto di file inviato dal Server al Client.
+
+	RawList: string --> Utilizzata per la pushrequest per identificare il semaforo associato
+	alla repository in esame.
 */
-type RawList: void {
-	.file[1 , *]: void {
+type RawList: string {
+	.file[0 , *]: void {
 		.filename: string
 		.content: raw
 		.version: long
