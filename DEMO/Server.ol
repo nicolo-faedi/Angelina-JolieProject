@@ -35,18 +35,19 @@ embedded {
 
 init
 {
-	global.requests = 0;
+
 	global.rootReaderCount = 0;
 
 	readXml@Locale( "Servers/"+S_NAME )( global.root );
 	semafori;
 
 	println@Console("SERVER AVVIATO
+
 >Name: "+S_NAME+"
 >Address: "+S_LOCATION+"
 >Repositories: "+#global.root.repo+"
-Attendo richieste...")()
 
+Attendo richieste...")()
 }
 
 define semafori
@@ -211,7 +212,7 @@ main
 				//Aggiorno l'xml
 				updateXml@Locale(global.root)(r);
 				
-				println@Console("Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )()
+				println@Console("Un utente ha aggiunto una nuova repository '" +regRepo.name+ "'" )()
 			}
 			else
 			{
@@ -227,7 +228,7 @@ main
 		endWriteRoot
 	} 
 
-
+	
 	/*
 
 	*/

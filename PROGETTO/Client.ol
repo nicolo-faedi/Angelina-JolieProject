@@ -233,7 +233,7 @@ define eseguiComando
             }
             else
             {
-                println@Console( "[ATTENZIONE]: Server già presente nella list servers" )()
+                println@Console( "[ATTENZIONE]: Server già registrato sotto il nome " + global.root.server[i-1].name)()
             }
         }
         else
@@ -251,22 +251,21 @@ define eseguiComando
 
         if (is_defined( command.result[1] ))
         {
-            name = command.result[1];
 
             regServer = false;
             for(i=0, i<#global.root.server && !regServer, i++)
             {
-                if(global.root.server[i].name == name)
+                if(global.root.server[i].name == command.result[1])
                 {
                     regServer = true;
                     undef(global.root.server[i]);
                     updateXml@Locale( global.root )();
-                    println@Console( "[SUCCESSO]: Server '"+name+"' eliminato" )()
+                    println@Console( "[SUCCESSO]: Server '" +command.result[1]+ "' eliminato" )()
                 }
             };
             if( !regServer )
             {
-                println@Console( "[ATTENZIONE]: Server '"+name+"' non trovato" )()
+                println@Console( "[ATTENZIONE]: Server '" +command.result[1]+ "' non trovato" )()
             }
         }
         else
@@ -316,46 +315,46 @@ define eseguiComando
                 }
             };   
         
-            if(ser && rep) //Ho registrato il sever e la repo non è associata al server
-            {
-                
+            if( ser ) //Il server è registrato
+            {  
                 addRepo.name = command.result[2];
                 addRepo.path = command.result[3];
                 addRepo.serverName = command.result[1];
                 addRepo.serverAddress = tmpServer.address;
-
-                //Controllo che il server raggiungibile gestendo l'eccezione
                 {
                     scope (fault_connection)
                     {
-                        install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
+                        install ( IOException => println@Console( "IOException: Non è stato possibile creare la repository sul server, perché non è raggiungibile" )() );
                         Server.location = tmpServer.address;
                         addRepository@Server( addRepo )
-                    } |
-
+                    }
+                }
+                    |
+                {
+                    if( rep ) //La repo non è stata registrata localmente
                     {
-                        exists@File(addRepo.path)(res);
+                        exists@File( addRepo.path )( res );
                         global.root.repo[#global.root.repo] << addRepo;
                         if(res)
                         {
-                            println@Console( "[SUCCESSO]: Ho registrato localmente '"+addRepo.name+"'@ "+addRepo.serverName)()
+                            println@Console( "[SUCCESSO]: Ho registrato localmente '" +addRepo.name+ "'@ " +addRepo.serverName )()
                         }
                         else
                         {
                             mkdir@File( addRepo.path )( response );
-                            println@Console( "[ATTENZIONE]: Non ho trovato '"+addRepo.path+"', ho comunque creato la repository" )()
+                            println@Console( "[ATTENZIONE]: Non ho trovato '" +addRepo.path+ "', ho comunque creato la repository" )()
                         };
                         updateXml@Locale(global.root)(r)
                     }
+                    else //La repo è già stata registrata localmente
+                    {
+                        println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate sul server " +addRepo.serverName )()
+                    }
                 }
             }
-            else if(!ser) //Il server non è tra quelli registrati
+            else //Il server non è tra quelli registrati
             {
                 println@Console( "[ATTENZIONE]: Server non presente tra quelli registrati" )()
-            }
-            else if(!rep) //La repo è già stata associata al server
-            {
-                println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate" )()
             }
         }
         else
