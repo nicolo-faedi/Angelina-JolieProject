@@ -1,4 +1,4 @@
 #!/bin/bash
 #ClientName : Client1
-
-jolie ClientDemo.ol Client1
+filename=`basename "$0"`
+jolie ClientDemo.ol ${filename%.sh}

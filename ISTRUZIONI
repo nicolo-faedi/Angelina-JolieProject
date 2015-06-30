@@ -1,19 +1,34 @@
-Progetto Angelina
 
-DEMO
-I client sono completamente automatizzati. Avviando "ClientName.sh" avvia il servizio
-"ClientDemo.ol" passandogli il ClientName in 'args[0]'. 
-Il servizio esegue le istruzioni presenti nel file "ClientName_Instructions" alternate da
-uno sleep di 2 secondi.
+#### DEMO ####
+I clients sono completamente automatizzati. 
+Es. Avviando "Client1.sh" si avvia il servizio "ClientDemo.ol" passando come nickname 
+direttamente il filename 'Client1'. Il servizio esegue sulla CLI le istruzioni presenti nel file 
+"Client1_Instructions" alternate da uno sleep di 4 secondi.
 
-
-- Avvio Demo (2 Clients / 1 Server)
-
-	1. Aggiungere ai propri servizi /usr/lib/jolie/JavaService tutto il contenuto della cartella 'Servizi Java'
-
-	2. Avviare da terminale 'jolie DEMO/Server.ol Server1 socket://localhost:8000'
-
-	3. Avviare in due terminali 'jolie DEMO/Client1.sh' e 'jolie DEMO/Client2.sh' contemporaneamente
+Il server viene avviato @ socket://localhost:8000 
+Nelle sezioni critiche agisce uno sleep di 6 secondi per aumentare la probabilità che vi siano situazioni di concorrenza.
 
 
-PROGETTO
+- ISTRUZIONI Avvio Demo (2 Clients - 1 Server)
+
+	1. Aggiungere ai propri servizi (/usr/lib/jolie/javaServices) tutto il contenuto della cartella 'Servizi Java'
+
+	2. Avviare da terminale 'jolie ../DEMO/Server.ol'
+
+	3. Avviare in due terminali 'jolie ../DEMO/Client1.sh' e 'jolie ../DEMO/Client2.sh' contemporaneamente
+
+	4. Le istruzioni verranno stampate a video con i risultati
+
+——————————————————————————————————————————————————————————————————————
+
+#### PROGETTO ####
+Non sono presenti sleep né sul server né sul client.
+
+- ISTRUZIONI Avvio Progetto (n Clients - n Servers)
+
+	1. Aggiungere tutto il contenuto della cartella 'Servizi Java' alla propria cartella (/usr/lib/jolie/javaServices)
+
+	2. Avviare da terminale 'jolie .../PROGETTO/Server.ol' quanti server si desiderano modificando ogni volta le costanti S_NAME e S_ADDRESS in 'Server.ol'
+
+	3. Avviare da terminale quanti clients si desiderano. All'avvio verrà richiesto il proprio nickname.
+

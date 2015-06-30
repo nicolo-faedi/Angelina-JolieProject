@@ -7,9 +7,9 @@ include "string_utils.iol"
 include "queue_utils.iol"
 
 constants {
-	S_LOCATION = args[1],
-	S_NAME = args[0],
-	Timer_wait = 10000
+	S_LOCATION = "socket://localhost:8000",
+	S_NAME = "Server1",
+	Timer_wait = 6000
 }
 
 outputPort Locale {
@@ -227,7 +227,7 @@ main
 		endWriteRoot
 	} 
 
-	
+
 	/*
 
 	*/
