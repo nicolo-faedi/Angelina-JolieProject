@@ -167,7 +167,7 @@ define eseguiComando
         }
         else
         {
-            println@Console("[ATTENZIONE] : Nessun server registrato")();
+            println@Console("[ATTENZIONE] : Nessun server registrato")()
         }
     }
 
@@ -510,7 +510,7 @@ define eseguiComando
                             //Controllo se ho la repo registrata localmente e, se è presente, che sia associata al server specificato
                             for(j=0, j<#global.root.repo && !repoClientTrovata, j++)
                             {
-                                if( global.root.repo[j].name == command.result[2] && global.root.repo[j].serverName == command.result[1 )
+                                if( global.root.repo[j].name == command.result[2] && global.root.repo[j].serverName == command.result[1] )
                                 {
                                     tmpRepo = global.root.repo[j].path;
                                     tmpRepo.relativePath = global.root.repo[j].name; 
