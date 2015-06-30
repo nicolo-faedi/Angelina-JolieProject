@@ -86,9 +86,11 @@ define eseguiComando
         Ricevo dal client un comando ed eseguo uno split per trovare tutti gli args 
     */
     cmd.regex = " ";
-    split@StringUtils(cmd)(command);
+    split@StringUtils( cmd )( command );
 
-    /*  Termina l'esecuzione del client */
+    /*  
+        Termina l'esecuzione del client
+    */
     if ( command.result[0] == "close")
     {
 
@@ -120,10 +122,10 @@ define eseguiComando
     else if ( command.result[0] +" "+ command.result[1] == "list servers") 
     {
 
-        if(#global.root.server != 0)
+        if( #global.root.server != 0 )
         {
             println@Console( "[Servers Registrati #"+#global.root.server+"]" )();
-            for(i=0, i<#global.root.server, i++) {
+            for( i=0, i<#global.root.server, i++ ) {
                 println@Console("ServerName: "+global.root.server[i].name +"\tServerAddress: "+global.root.server[i].address)()
             }
         }
@@ -139,16 +141,16 @@ define eseguiComando
     else if( command.result[0] +" "+ command.result[1] == "list new_repos" )
     {
 
-        if(#global.root.server != 0)
+        if( #global.root.server != 0 )
         {
-            for(i=0, i<#global.root.server, i++)
+            for( i=0, i<#global.root.server, i++ )
             {
-                scope (fault_connection)
+                scope ( fault_connection )
                 {
-                    install( IOException => println@Console("[ATTENZIONE] : "+global.root.server[i].name+" @ "+global.root.server[i].address+" - Non raggiungibile" )() );
+                    install( IOException => println@Console( "[ATTENZIONE] : "+global.root.server[i].name+" @ "+global.root.server[i].address+" - Non raggiungibile" )() );
                     Server.location = global.root.server[i].address;
-                    getServerRepoList@Server()(newRepoList);
-                    if(#newRepoList.repo != 0)
+                    getServerRepoList@Server()( newRepoList );
+                    if( #newRepoList.repo != 0 )
                     {
                         println@Console( global.root.server[i].name+" @ "+global.root.server[i].address)();
                         for(j=0, j<#newRepoList.repo, j++)
@@ -196,45 +198,37 @@ define eseguiComando
     else if ( command.result[0] == "addServer") 
     {
 
-        if (is_defined( command.result[1] ) && is_defined( command.result[2] ))
+        if ( is_defined( command.result[1] ) && is_defined( command.result[2] ))
         {
             newServer.name = command.result[1];
             newServer.address = command.result[2];
-            flag = true;
+            regServer = false;
 
             //Controllo se ho già registrato il server 
-            for(i=0, i<#global.root.server && flag, i++)
+            for(i=0, i<#global.root.server && !regServer, i++)
             {
-                if(global.root.server[i].address == newServer.address)
+                if( global.root.server[i].address == newServer.address )
                 {
-                    flag = false
+                    regServer = true
                 }
             };
 
             //Se non l'ho registrato, provo un handshake
-            if(flag)
+            if( !regServer )
             {
-                //isValidIp@JavaService(newServer.address)(validIp);
-                validIp = true;
-                if(validIp)
-                {   
-                    scope( fault_connection )
-                    {
-                        install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
-                        Server.location = newServer.address;
-                        addServer@Server( newServer )( server_response )
-                    };
+                
+                scope( fault_connection )
+                {
+                    install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
+                    Server.location = newServer.address;
+                    addServer@Server( newServer )( server_response );
                     //Se ricevo risposta aggiungo il server alla struttura
                     if( server_response ) 
                     { 
                         global.root.server[#global.root.server] << newServer;
-                        updateXml@Locale(global.root)(xmlUpdate_res);
+                        updateXml@Locale( global.root )( xmlUpdate_res );
                         println@Console( "[SUCCESSO]: Server aggiunto" )()
                     }
-                }
-                else
-                {
-                    println@Console( "[ATTENZIONE]: L'indirizzo immesso non è valido" )()
                 }
             }
             else
@@ -259,18 +253,18 @@ define eseguiComando
         {
             name = command.result[1];
 
-            flag = false;
-            for(i=0, i<#global.root.server, i++)
+            regServer = false;
+            for(i=0, i<#global.root.server && !regServer, i++)
             {
                 if(global.root.server[i].name == name)
                 {
-                    flag = true;
+                    regServer = true;
                     undef(global.root.server[i]);
-                    updateXml@Locale(global.root)();
+                    updateXml@Locale( global.root )();
                     println@Console( "[SUCCESSO]: Server '"+name+"' eliminato" )()
                 }
             };
-            if(!flag)
+            if( !regServer )
             {
                 println@Console( "[ATTENZIONE]: Server '"+name+"' non trovato" )()
             }
@@ -292,75 +286,74 @@ define eseguiComando
     else if (command.result[0] == "addRepository")
     {
 
-        if (is_defined(command.result[1]) && is_defined(command.result[2]) && is_defined(command.result[3]))
+        if ( is_defined(command.result[1]) && is_defined(command.result[2]) && is_defined(command.result[3] ))
         {
-            tmpServerName = command.result[1];
-            tmpRepoName = command.result[2];
-            localPath = command.result[3];
-            
-             
-            //Controllo in concorrenza se ho il server e il repo richiesti
-            ser = false;
-            rep = true;
+
+            //Controllo in parallelo se ho il server e la repo richiesti
+            ser = false; //Booleano per dire se il sever è stato trovato o meno
+            rep = true; //Booleano per dise se la repo è già stata registrata come repo associata a server specificato
 
             tmpServer = "";
 
             {
+                //Controllo se il server è presente tra quelli registrati
                 for(i=0, i<#global.root.server && !ser, i++)
                 {
-                    if(global.root.server[i].name == tmpServerName)
+                    if( global.root.server[i].name == command.result[1] )
                     {
                         tmpServer << global.root.server[i];
                         ser = true
                     }
-                } |
+                } 
+                    |
+                //Controllo se la repo è già stata registrata come repo associata a server specificato
                 for(j=0, j<#global.root.repo && rep, j++)
                 {
-                    if(global.root.repo[j].name == tmpRepoName)
+                    if( ( global.root.repo[j].name == command.result[2] ) && ( global.root.repo[j].serverName == command.result[1] ) )
                     {
                         rep = false
                     }
                 }
             };   
         
-            if(ser && rep)
+            if(ser && rep) //Ho registrato il sever e la repo non è associata al server
             {
-                undef( tmp );
-                tmp.name = tmpRepoName;
-                tmp.path = localPath;
-                tmp.serverName = tmpServerName;
-                tmp.serverAddress = tmpServer.address;
+                
+                addRepo.name = command.result[2];
+                addRepo.path = command.result[3];
+                addRepo.serverName = command.result[1];
+                addRepo.serverAddress = tmpServer.address;
 
-                //controllo che il server sia online gestendo l'eccezione
+                //Controllo che il server raggiungibile gestendo l'eccezione
                 {
                     scope (fault_connection)
                     {
                         install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
                         Server.location = tmpServer.address;
-                        addRepository@Server(tmp)
+                        addRepository@Server( addRepo )
                     } |
 
                     {
-                        exists@File(tmp.path)(res);
-                        global.root.repo[#global.root.repo] << tmp;
+                        exists@File(addRepo.path)(res);
+                        global.root.repo[#global.root.repo] << addRepo;
                         if(res)
                         {
-                            println@Console( "[SUCCESSO]: Ho registrato localmente '"+tmp.name+"'@ "+tmp.serverName)()
+                            println@Console( "[SUCCESSO]: Ho registrato localmente '"+addRepo.name+"'@ "+addRepo.serverName)()
                         }
                         else
                         {
-                            mkdir@File( tmp.path )( response );
-                            println@Console( "[ATTENZIONE]: Non ho trovato '"+tmp.path+"', ho comunque creato la repository" )()
+                            mkdir@File( addRepo.path )( response );
+                            println@Console( "[ATTENZIONE]: Non ho trovato '"+addRepo.path+"', ho comunque creato la repository" )()
                         };
                         updateXml@Locale(global.root)(r)
                     }
                 }
             }
-            else if(!ser)
+            else if(!ser) //Il server non è tra quelli registrati
             {
                 println@Console( "[ATTENZIONE]: Server non presente tra quelli registrati" )()
             }
-            else if(!rep)
+            else if(!rep) //La repo è già stata associata al server
             {
                 println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate" )()
             }
@@ -449,11 +442,11 @@ define eseguiComando
                                 
                             if (#pushList.fileToPull>0)
                             {
-                                println@Console( "[ATTENZIONE] : Devi effettuare la pull della repository per i seguenti file non aggiornati" )();
+                                println@Console( "[ATTENZIONE] : I seguenti file nella repository non sono aggiornati" )();
                                 for(j=0, j<#pushList.fileToPull, j++)
                                 {
-                                    println@Console(pushList.fileToPull[j] )()
                                     //STAMPO FILE TO PULL
+                                    println@Console(pushList.fileToPull[j] )()
                                 }
                             }
                         }                        
@@ -489,7 +482,7 @@ define eseguiComando
             for(i=0, i<#global.root.server && !serverTrovato, i++)
             {
                 // Se il server è registrato
-                if(global.root.server.name == command.result[1])
+                if(global.root.server[i].name == command.result[1])
                 {
                     serverTrovato = true;
                     scope( fault_connection )
@@ -514,10 +507,10 @@ define eseguiComando
 
                             repoClientTrovata = false;
 
-                            //Controllo se ho la repo registrata localmente
+                            //Controllo se ho la repo registrata localmente e, se è presente, che sia associata al server specificato
                             for(j=0, j<#global.root.repo && !repoClientTrovata, j++)
                             {
-                                if(global.root.repo[j].name == command.result[2])
+                                if( global.root.repo[j].name == command.result[2] && global.root.repo[j].serverName == command.result[1 )
                                 {
                                     tmpRepo = global.root.repo[j].path;
                                     tmpRepo.relativePath = global.root.repo[j].name; 

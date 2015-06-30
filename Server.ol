@@ -83,7 +83,6 @@ define semafori
 
 define startReadRoot
 {
-	println@Console( "START READ ROOT" )();
 	acquire@SemaphoreUtils(sRootMutex)(sRootResponse);
 	global.rootReaderCount++;
 	if(global.rootReaderCount == 1)
@@ -155,11 +154,13 @@ execution { concurrent }
 main 
 {  
 	/* 	Riceve la richiesta di aggiunta server, ritorna true */
-	[ addServer( server )( connection_response ){
+	[ addServer( server )( connection_response )
+	{
 		connection_response = true
-	} ] { 
-		global.request++;
-		println@Console("Request#"+global.request+" : Un nuovo utente ha aggiunto il server")() }
+	} ] 
+		{
+			println@Console("Un nuovo utente ha aggiunto il server")() 
+		}
 
 
 
@@ -168,14 +169,14 @@ main
 		2. Se non è presente, aggiunge la repo alla struttura e all'xml.
 		Gestisce la concorrenza sulla struttura global.root e sulla scrittura
 		su xml. */
-	[ addRepository( regRepo ) ]{
+	[ addRepository( regRepo ) ]
+	{
 
 		regRepo.path = "Servers/"+S_NAME+"/"+regRepo.name;
 
 		//Acquisisco il lock per poter scrivere in global.root
 		startWriteRoot;
 
-		println@Console( "ADD REPOSITORY: Inizio a leggere..." )();
 		sleep@Time(Timer_wait)();
 
 		a = false;
@@ -186,8 +187,6 @@ main
 				a = true
 			}
 		};
-
-		println@Console( "ADD REPOSITORY: Ho finito di leggere" )();
 		
 		if(!a)
 		{
@@ -200,15 +199,11 @@ main
 			regRepo.sMutex.permits = 1;
 			release@SemaphoreUtils(regRepo.sMutex)(sRepoResponse);
 
-			
-			println@Console( "ADD REPOSITORY: Inizio a scrivere..." )();
 			sleep@Time(Timer_wait)();
 
 			//Creo il path della repository
 			mkdir@File( regRepo.path )( response );
 			//Faccio un ulteriore controllo per evitare doppioni in global.root e nel XML
-			//Aggiorno le richieste
-			global.request++;
 			if(response)
 			{
 				//Aggiungo la repository alla struttura
@@ -216,19 +211,16 @@ main
 				//Aggiorno l'xml
 				updateXml@Locale(global.root)(r);
 				
-				println@Console("Request#"+global.request+" : Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )()
+				println@Console("Un utente ha aggiunto una nuova repository '"+regRepo.name+"'" )()
 			}
 			else
 			{
-				println@Console("Request#"+global.request+" : Un utente ha provato ad aggiungere una repository appena creata da un altro utente" )()
-			};
-
-			println@Console( "ADD REPOSITORY: Scrittura Finita" )()
+				println@Console("Un utente ha provato ad aggiungere una repository appena creata da un altro utente" )()
+			}
 		}
 		else
 		{
-			global.request++;
-			println@Console("Request#"+global.request+" : Un utente ha provato ad aggiungere una repository già presente" )()
+			println@Console("Un utente ha provato ad aggiungere una repository già presente" )()
 		};
 
 		//Rilascio il lock a scrittura ultimata
@@ -239,23 +231,22 @@ main
 	/*
 
 	*/
-	[ getServerRepoList()( newRepoList ) {
+	[ getServerRepoList()( newRepoList ) 
+	{
 		startReadRoot;
-		println@Console( "GET REPOLIST: Inizio a leggere..." )();
 		sleep@Time(Timer_wait)();
 		newRepoList << global.root;
 		endReadRoot;
-		global.request++;
-		println@Console("Request#"+global.request+" : Un utente ha richiesto la Server RegRepo List" )();
-		println@Console( "GET REPOLIST: Ho finito di leggere" )()
-	}]
+		println@Console("Un utente ha richiesto la Server RegRepo List" )()
+	} ]
 
 
 
 	/*
 
 	*/
-	[ pushRequest( repo_tree )( list ) {
+	[ pushRequest( repo_tree )( list ) 
+	{
 		flag = false;
 		//Ottengo la struttura relativa alla repo inviata dal client
 		
@@ -271,8 +262,6 @@ main
 
 				endReadRoot;
 
-
-				println@Console( "PUSH REQUEST: Avvio un versioning" )();
 				sleep@Time(Timer_wait)();
 				flag = true;
 				//Rilascio il semaforo sul reader di global.root
@@ -332,19 +321,16 @@ main
 			}
 		};
 		//Rilascio il semaforo sul reader di global.root
-		endReadRoot
+		endReadRoot;
+		list = repo_tree
 
-	}] {
-		global.request++;
-		println@Console("Request#"+global.request+" : Effettuo il versioning di una nuova richiesta di push repository " )()
-	}
+	} ]
 
 	/*
 
 	*/
 	[ push( push_rawList ) ]{
 
-		println@Console( "PUSH: Effettuo la push dei file" )();
 		if(#push_rawList.file != 0)
 		{
 			for(i=0, i<#push_rawList.file, i++)
@@ -365,7 +351,7 @@ main
 		tempSemaforo.permits = 1;
 
 		endWriteRepo;
-		println@Console("[SUCCESSO] : Push della repository è stata eseguita correttamente" )()		
+		println@Console("Push della repository " + push_rawList + " eseguita correttamente" )()		
 	}
 
 
@@ -395,7 +381,7 @@ main
         }
         else 
         {
-        	currentRepo = global.root.repo[ j-1 ].path;
+        	currentRepo = global.root.repo[ i-1 ].path;
         	currentRepo.relativePath = repoToPullName;
         	fileToValue@Locale( currentRepo )( StrutturaRepo );
         	StrutturaRepoServer << StrutturaRepo
@@ -406,6 +392,7 @@ main
 
 	
 	[ pull( PullList )( pull_rawList ) {
+
 		for( i = 0, i < #PullList.fileToPull, i++ ){
 			// Assegno a filename il path assoluto su server
 			file.filename = "Servers/"+S_NAME+"/"+PullList.fileToPull[ i ];
@@ -426,22 +413,26 @@ main
             undef( file.version )
 		};
 
+		pull_rawList = PullList;
+
 		trovata = false;
 		for (i = 0, i <#global.root.repo && !trovata, i++)
 		{
-			if (global.root.repo[i].name == Pulllist)
+			if (global.root.repo[i].name == PullList)
 			{
 				endReadRepo;
 				trovata = true
 			}
 		}
-	}]
+	} ]
+		{
+			println@Console("Pull della repository "+ PullList +" eseguita correttamente")()
+		}
 
 	[ delete( repoName ) ] {
 		repoTrovata = false;
 		
 		startWriteRoot;
-		println@Console( "DELETE: Inizio a cancellare..." )();
 		sleep@Time(Timer_wait)();
 		for( i=0 , i<#global.root.repo && !repoTrovata, i++)
 		{
@@ -461,13 +452,11 @@ main
 				deleteDir@File(tempRelativePath)(deleteRes);
 				if(deleteRes)
 				{
-					global.request++;
-					println@Console("Request#"+global.request+" : Un utene ha eliminato la repository "+tempName )()
+					println@Console("Un utene ha eliminato la repository "+tempName )()
 				}
 			}
 		};
-		endWriteRoot;
-		println@Console( "DELETE: Ho finito" )()
+		endWriteRoot
 	}
 
 }
