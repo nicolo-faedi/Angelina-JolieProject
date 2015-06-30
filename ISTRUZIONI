@@ -1,0 +1,19 @@
+Progetto Angelina
+
+DEMO
+I client sono completamente automatizzati. Avviando "ClientName.sh" avvia il servizio
+"ClientDemo.ol" passandogli il ClientName in 'args[0]'. 
+Il servizio esegue le istruzioni presenti nel file "ClientName_Instructions" alternate da
+uno sleep di 2 secondi.
+
+
+- Avvio Demo (2 Clients / 1 Server)
+
+	1. Aggiungere ai propri servizi /usr/lib/jolie/JavaService tutto il contenuto della cartella 'Servizi Java'
+
+	2. Avviare da terminale 'jolie DEMO/Server.ol Server1 socket://localhost:8000'
+
+	3. Avviare in due terminali 'jolie DEMO/Client1.sh' e 'jolie DEMO/Client2.sh' contemporaneamente
+
+
+PROGETTO

@@ -81,46 +81,50 @@ main
 
 define eseguiComando
 {
-    /*  Ricevo dal client un comando, lo splitto per trovare tutti gli args */
+    /*  
+        Ricevo dal client un comando ed eseguo uno split per trovare tutti gli args 
+    */
     cmd.regex = " ";
-    split@StringUtils(cmd)(command);
+    split@StringUtils( cmd )( command );
 
-    /*  Termina l'esecuzione del client */
+    /*  
+        Termina l'esecuzione del client
+    */
     if ( command.result[0] == "close")
     {
 
         println@Console("Disconnessione in corso...\nSessione conclusa.")()
     }
 
-
-
-    /*  Pulisce la schermata del terminale */
+    /*  
+        Pulisce la schermata del terminale 
+    */
     else if ( command.result[0] == "clear" ) 
     {
-        cmdRequest = "clear";
-        exec@Exec( cmdRequest )( cmdResponse );
+
+        exec@Exec( command.result[0] )( cmdResponse );
         print@Console( cmdResponse )()
     }
 
-
-
-    /*  Stampo a video i comandi disponibili */
+    /*  
+        Stampo a video i comandi disponibili 
+    */
     else if( command.result[0] == "help")
     {
 
         println@Console(HELP)()
     } 
-
-
-
         
-    /*  Stampo a video la lista dei server contenuti in root.server */
+    /*  
+        Stampo a video la lista dei server contenuti in root.server 
+    */
     else if ( command.result[0] +" "+ command.result[1] == "list servers") 
     {
-        if(#global.root.server != 0)
+
+        if( #global.root.server != 0 )
         {
             println@Console( "[Servers Registrati #"+#global.root.server+"]" )();
-            for(i=0, i<#global.root.server, i++) {
+            for( i=0, i<#global.root.server, i++ ) {
                 println@Console("ServerName: "+global.root.server[i].name +"\tServerAddress: "+global.root.server[i].address)()
             }
         }
@@ -130,22 +134,22 @@ define eseguiComando
         }
     }
 
-
-
-
-    /* Stampo a video la lista delle repository presenti sul server passato nell'arg "serverName" */
+    /* 
+        Stampo a video la lista delle repository presenti sul server passato nell'arg "serverName"
+    */
     else if( command.result[0] +" "+ command.result[1] == "list new_repos" )
     {
-        if(#global.root.server != 0)
+
+        if( #global.root.server != 0 )
         {
-            for(i=0, i<#global.root.server, i++)
+            for( i=0, i<#global.root.server, i++ )
             {
-                scope (fault_connection)
+                scope ( fault_connection )
                 {
-                    install( IOException => println@Console("[ATTENZIONE] : "+global.root.server[i].name+" @ "+global.root.server[i].address+" - Non raggiungibile" )() );
+                    install( IOException => println@Console( "[ATTENZIONE] : "+global.root.server[i].name+" @ "+global.root.server[i].address+" - Non raggiungibile" )() );
                     Server.location = global.root.server[i].address;
-                    getServerRepoList@Server()(newRepoList);
-                    if(#newRepoList.repo != 0)
+                    getServerRepoList@Server()( newRepoList );
+                    if( #newRepoList.repo != 0 )
                     {
                         println@Console( global.root.server[i].name+" @ "+global.root.server[i].address)();
                         for(j=0, j<#newRepoList.repo, j++)
@@ -160,14 +164,18 @@ define eseguiComando
                 }
             }
         }
+        else
+        {
+            println@Console("[ATTENZIONE] : Nessun server registrato")()
+        }
     }
 
-
-
-    
-    /*  Stampo a video la lista dei server contenuti in root.repo (localmente)*/
+    /*  
+        Stampo a video la lista dei server contenuti in root.repo (localmente)
+    */
     else if ( command.result[0]+" "+command.result[1] == "list reg_repos") 
     {
+
         if(#global.root.repo != 0)
         {
             println@Console( "[Repositories Registrate #"+#global.root.repo+"]" )();
@@ -182,46 +190,45 @@ define eseguiComando
         }
     }
 
-
-
-      
-    /*  Provo a contattare il server passato dagli args result[1] e [2],
-        Se ricevo risposta, aggiungo il server alla struttura e all'xml */
+    /* 
+        Provo a contattare il server passato dagli args result[1] e [2],
+        Se ricevo risposta, aggiungo il server alla struttura e al XML
+    */
     else if ( command.result[0] == "addServer") 
     {
-        newServer.name = command.result[1];
-        newServer.address = command.result[2];
-        if(is_defined( newServer.name ) && is_defined( newServer.address ))
+
+        if ( is_defined( command.result[1] ) && is_defined( command.result[2] ))
         {
-            flag = true;
+            newServer.name = command.result[1];
+            newServer.address = command.result[2];
+            regServer = false;
 
             //Controllo se ho già registrato il server 
-            for(i=0, i<#global.root.server && flag, i++)
+            for(i=0, i<#global.root.server && !regServer, i++)
             {
-                if(global.root.server[i].address == newServer.address)
+                if( global.root.server[i].address == newServer.address )
                 {
-                    flag = false
+                    regServer = true
                 }
             };
 
             //Se non l'ho registrato, provo un handshake
-            if(flag)
+            if( !regServer )
             {
+                
                 scope( fault_connection )
                 {
                     install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
                     Server.location = newServer.address;
                     addServer@Server( newServer )( server_response );
-                    
                     //Se ricevo risposta aggiungo il server alla struttura
                     if( server_response ) 
                     { 
                         global.root.server[#global.root.server] << newServer;
-                        updateXml@Locale(global.root)(xmlUpdate_res);
+                        updateXml@Locale( global.root )( xmlUpdate_res );
                         println@Console( "[SUCCESSO]: Server aggiunto" )()
                     }
                 }
-                
             }
             else
             {
@@ -234,447 +241,473 @@ define eseguiComando
         }
     }
 
-
-
-
-    /*  Cerco se il server è presente nella struttura, se sì lo elimino e 
-        aggiorno il file xml */
+    /*  
+        Cerco se il server è presente nella struttura.
+        Se è presente lo elimino dalla struttura e aggiorno il file XML
+    */
     else if ( command.result[0] == "removeServer") 
     {
-        name = command.result[1];
 
-        flag = false;
-        for(i=0, i<#global.root.server, i++)
+        if (is_defined( command.result[1] ))
         {
-            if(global.root.server[i].name == name)
+            name = command.result[1];
+
+            regServer = false;
+            for(i=0, i<#global.root.server && !regServer, i++)
             {
-                flag = true;
-                undef(global.root.server[i]);
-                updateXml@Locale(global.root)();
-                println@Console( "[SUCCESSO]: Server '"+name+"' eliminato" )()
+                if(global.root.server[i].name == name)
+                {
+                    regServer = true;
+                    undef(global.root.server[i]);
+                    updateXml@Locale( global.root )();
+                    println@Console( "[SUCCESSO]: Server '"+name+"' eliminato" )()
+                }
+            };
+            if( !regServer )
+            {
+                println@Console( "[ATTENZIONE]: Server '"+name+"' non trovato" )()
             }
-        };
-        if(!flag)
+        }
+        else
         {
-            println@Console( "[ATTENZIONE]: Server '"+name+"' non trovato" )()
+            println@Console( "[ATTENZIONE]: Definire correttamente il parametro [serverName]" )()
         }
     }
 
-
-
-    
-    /*  Controllo in parallelo
+    /*  
+        Controllo in parallelo
         - Il server sia presente fra quelli aggiunti
         - La repository non sia già stata aggiunta
-        Se passo questo check, sempre in parallelo
-        - Contatto il server e gli invio la repository, starà a lui gestirsela
-        - Controllo se il path passato esiste, altrimenti lo creo e aggiorno l'xml */
+        Se il controllo va a buon fine, sempre in parallelo
+        - Contatto il server e gli invio la repository da gestire
+        - Controllo se il path passato esiste, altrimenti lo creo e aggiorno il file XML
+    */
     else if (command.result[0] == "addRepository")
     {
-        tmpServerName = command.result[1];
-        tmpRepoName = command.result[2];
-        localPath = command.result[3];
-        
-         
-        //Controllo in concorrenza se ho il server e il repo richiesti
-        a = false;
-        b = true;
 
-        tmpServer = "";
-
+        if ( is_defined(command.result[1]) && is_defined(command.result[2]) && is_defined(command.result[3] ))
         {
-            for(i=0, i<#global.root.server && !a, i++)
-            {
-                if(global.root.server[i].name == tmpServerName)
-                {
-                    tmpServer << global.root.server[i];
-                    a = true
-                }
-            } |
-            for(j=0, j<#global.root.repo && b, j++)
-            {
-                if(global.root.repo[j].name == tmpRepoName)
-                {
-                    b = false
-                }
-            }
-        };   
-    
-        if(a && b)
-        {
-            undef( tmp );
-            tmp.name = tmpRepoName;
-            tmp.path = localPath;
-            tmp.serverName = tmpServerName;
-            tmp.serverAddress = tmpServer.address;
 
-            //controllo che il server sia online gestendo l'eccezione
-            {
-                scope (fault_connection)
-                {
-                    install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
-                    Server.location = tmpServer.address;
-                    addRepository@Server(tmp)
-                } |
+            //Controllo in parallelo se ho il server e la repo richiesti
+            ser = false; //Booleano per dire se il sever è stato trovato o meno
+            rep = true; //Booleano per dise se la repo è già stata registrata come repo associata a server specificato
 
+            tmpServer = "";
+
+            {
+                //Controllo se il server è presente tra quelli registrati
+                for(i=0, i<#global.root.server && !ser, i++)
                 {
-                    exists@File(tmp.path)(res);
-                    global.root.repo[#global.root.repo] << tmp;
-                    if(res)
+                    if( global.root.server[i].name == command.result[1] )
                     {
-                        println@Console( "[SUCCESSO]: Ho registrato localmente '"+tmp.name+"'@ "+tmp.serverName)()
+                        tmpServer << global.root.server[i];
+                        ser = true
                     }
-                    else
+                } 
+                    |
+                //Controllo se la repo è già stata registrata come repo associata a server specificato
+                for(j=0, j<#global.root.repo && rep, j++)
+                {
+                    if( ( global.root.repo[j].name == command.result[2] ) && ( global.root.repo[j].serverName == command.result[1] ) )
                     {
-                        mkdir@File( tmp.path )( response );
-                        println@Console( "[ATTENZIONE]: Non ho trovato '"+tmp.path+"', ho comunque creato la repository" )()
-                    };
-                    updateXml@Locale(global.root)(r)
+                        rep = false
+                    }
+                }
+            };   
+        
+            if(ser && rep) //Ho registrato il sever e la repo non è associata al server
+            {
+                
+                addRepo.name = command.result[2];
+                addRepo.path = command.result[3];
+                addRepo.serverName = command.result[1];
+                addRepo.serverAddress = tmpServer.address;
+
+                //Controllo che il server raggiungibile gestendo l'eccezione
+                {
+                    scope (fault_connection)
+                    {
+                        install ( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
+                        Server.location = tmpServer.address;
+                        addRepository@Server( addRepo )
+                    } |
+
+                    {
+                        exists@File(addRepo.path)(res);
+                        global.root.repo[#global.root.repo] << addRepo;
+                        if(res)
+                        {
+                            println@Console( "[SUCCESSO]: Ho registrato localmente '"+addRepo.name+"'@ "+addRepo.serverName)()
+                        }
+                        else
+                        {
+                            mkdir@File( addRepo.path )( response );
+                            println@Console( "[ATTENZIONE]: Non ho trovato '"+addRepo.path+"', ho comunque creato la repository" )()
+                        };
+                        updateXml@Locale(global.root)(r)
+                    }
                 }
             }
+            else if(!ser) //Il server non è tra quelli registrati
+            {
+                println@Console( "[ATTENZIONE]: Server non presente tra quelli registrati" )()
+            }
+            else if(!rep) //La repo è già stata associata al server
+            {
+                println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate" )()
+            }
         }
-        else if(!a)
+        else
         {
-            println@Console( "[ATTENZIONE]: Server non presente tra quelli registrati" )()
-        }
-        else if(!b)
-        {
-            println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate" )()
+            println@Console( "[ATTENZIONE]: Definire correttamente i parametri [serverName], [repoName] e [locaPath]" )()
         }
     }
 
-
-
-
-    /* PUSH
+    /* 
+        PUSH
         1 - Ottengo dai path delle mie Reg Repos il tree della mia repository
         2 - Invio il tree al server che effettua il versioning
         3 - Effettua automaticamente la Push dei file che hanno verisione > di quella del server
-        4 - Ritorna la PULL LIST dei file che hanno versione < di quella del server */
+        4 - Ritorna la PULL LIST dei file che hanno versione < di quella del server 
+    */
     else if (command.result[0] == "push")
     {
 
-        flag = false;
-        //Controllo se la repo è registrata
-        for(i=0, i<#global.root.repo && !flag, i++)
+        if (is_defined(command.result[1]) && is_defined(command.result[2]))
         {
-            if(global.root.repo[i].name == command.result[2] && global.root.repo[i].serverName == command.result[1])
+            flag = false;
+            //Controllo se la repo è registrata
+            for(i=0, i<#global.root.repo && !flag, i++)
             {
-                scope( fault_connection )
+                if(global.root.repo[i].name == command.result[2] && global.root.repo[i].serverName == command.result[1])
                 {
-                    install( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
-                    //Otteniamo la struttura/sottostruttura di quella repo
-                    undef( tmpRepo );
-                    tmpRepo = global.root.repo[i].path;
-                    tmpRepo.relativePath = global.root.repo[i].name; 
-                    fileToValue@Locale(tmpRepo)(repo_tree);
-                    repo_tree = global.root.repo[i].name;
-
-                    
-                    Server.location = global.root.repo[i].serverAddress;
-                    pushRequest@Server( repo_tree )( pushList );
-                    //println@Console( "Attendo risposta server.." )();
-
+                    scope( fault_connection )
                     {
-                        for(k=0, k < #pushList.fileToPush, k++)
-                        {
-                            
-                            //Elimino dall'absolute path il reponame e aggiungo il relative path del file
-                            length@StringUtils(global.root.repo[i].path)(absoluteLength);
-                            length@StringUtils(global.root.repo[i].name)(reponameLength);
-                            sub_request = global.root.repo[i].path;
-                            sub_request.begin = 0;
-                            sub_request.end = absoluteLength - reponameLength;
-                            substring@StringUtils(sub_request)(sub_res);
+                        install( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
+                        //Otteniamo la struttura/sottostruttura di quella repo
+                        undef( tmpRepo );
+                        tmpRepo = global.root.repo[i].path;
+                        tmpRepo.relativePath = global.root.repo[i].name; 
+                        fileToValue@Locale(tmpRepo)(repo_tree);
+                        repo_tree = global.root.repo[i].name;
 
-                            file.filename = sub_res+pushList.fileToPush[k];
-
-                            //println@Console( file.filename )();
-                            file.format = format = "binary";
-
-                            readFile@File(file)(file.content); 
-
-                            file.filename = pushList.fileToPush[k];
-
-                            //Ottengo la versione del file in esame
-                            getLastModString@JavaService ( sub_res + pushList.fileToPush[k] )( v );
-                            file.version = long(v);
-
-                            undef( file.format );
-                            rawList.file[#rawList.file] << file;
-
-                            //println@Console( file.version )();
-                            //Rimuovo i campi non voluti dal servizio ReadFile@File
-                            undef( file.content );
-                            undef( file.version )
-                            
-                        }; 
-                            //INVIA I FILE AL SERVER
-                            //Aggiungo a rawList la repository in esame, per rilasciare il suo semaforo sul server.
-                            rawList = global.root.repo[i].name;
-                            push@Server(rawList);
-                            println@Console( "[SUCCESSO] : La pushRequest è stata inviata al server" )()
                         
-                        
-                        ;
-                            
-                        if (#pushList.fileToPull>0)
+                        Server.location = global.root.repo[i].serverAddress;
+                        pushRequest@Server( repo_tree )( pushList );
+                        //println@Console( "Attendo risposta server.." )();
+
                         {
-                            println@Console( "[ATTENZIONE] : Devi effettuare la pull della repository per i seguenti file non aggiornati" )();
-                            for(j=0, j<#pushList.fileToPull, j++)
+                            for(k=0, k < #pushList.fileToPush, k++)
                             {
-                                println@Console(pushList.fileToPull[j] )()
-                                //STAMPO FILE TO PULL
+                                
+                                //Elimino dall'absolute path il reponame e aggiungo il relative path del file
+                                length@StringUtils(global.root.repo[i].path)(absoluteLength);
+                                length@StringUtils(global.root.repo[i].name)(reponameLength);
+                                sub_request = global.root.repo[i].path;
+                                sub_request.begin = 0;
+                                sub_request.end = absoluteLength - reponameLength;
+                                substring@StringUtils(sub_request)(sub_res);
+
+                                file.filename = sub_res+pushList.fileToPush[k];
+
+                                //println@Console( file.filename )();
+                                file.format = format = "binary";
+
+                                readFile@File(file)(file.content); 
+
+                                file.filename = pushList.fileToPush[k];
+
+                                //Ottengo la versione del file in esame
+                                getLastModString@JavaService ( sub_res + pushList.fileToPush[k] )( v );
+                                file.version = long(v);
+
+                                undef( file.format );
+                                rawList.file[#rawList.file] << file;
+
+                                //println@Console( file.version )();
+                                //Rimuovo i campi non voluti dal servizio ReadFile@File
+                                undef( file.content );
+                                undef( file.version )
+                                
+                            }; 
+                                //INVIA I FILE AL SERVER
+                                //Aggiungo a rawList la repository in esame, per rilasciare il suo semaforo sul server.
+                                rawList = global.root.repo[i].name;
+                                push@Server(rawList);
+                                println@Console( "[SUCCESSO] : La pushRequest è stata inviata al server" )()
+                            
+                            
+                            ;
+                                
+                            if (#pushList.fileToPull>0)
+                            {
+                                println@Console( "[ATTENZIONE] : I seguenti file nella repository non sono aggiornati" )();
+                                for(j=0, j<#pushList.fileToPull, j++)
+                                {
+                                    //STAMPO FILE TO PULL
+                                    println@Console(pushList.fileToPull[j] )()
+                                }
                             }
-                        }
-                    }                        
-                };
-                
-                flag = true
+                        }                        
+                    };
+                    
+                    flag = true
+                }
+            };
+            //Se NO
+            if(!flag)
+            {
+                println@Console( "[ATTENZIONE]: Repository non trovata tra quelle registrate" )()
             }
-        };
-        //Se NO
-        if(!flag)
+        }
+        else
         {
-            println@Console( "[ATTENZIONE]: Repository non trovata tra quelle registrate" )()
+            println@Console( "[ATTENZIONE]: Definire correttamente i parametri [serverName] e [repoName]" )()
         }
     }
 
+    /* 
 
-
-    /* */
+    */
     else if (command.result[0] == "pull")
     {
-        //command.result[1] = serverName;
-        //command.result[2] = repoName
-        repoTrovata = false;
-        serverTrovato = false;
 
-        // Cerco se esiste il Server
-        for(i=0, i<#global.root.server && !serverTrovato, i++)
+        if (is_defined(command.result[1]) && is_defined(command.result[2]))
         {
-            // Se il server è registrato
-            if(global.root.server.name == command.result[1])
+            repoTrovata = false;
+            serverTrovato = false;
+
+            // Cerco se esiste il Server
+            for(i=0, i<#global.root.server && !serverTrovato, i++)
             {
-                serverTrovato = true;
-                scope( fault_connection )
+                // Se il server è registrato
+                if(global.root.server[i].name == command.result[1])
                 {
-                    //Contatto il server
-                    install( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
-                    Server.location = global.root.server.address;
-
-                    // Invio una richiesta al server e mi ritorna la sua struttura della repo
-                    pullRequest@Server( command.result[2] )( serverRepo_tree );
-
-                    // Se la repo non è presente sul server
-                    if (serverRepo_tree != "NonTrovata") {
-                        repoServerTrovata = true
-                    };
-
-                    //Se è presente sul server continuiamo
-                    if(repoServerTrovata)
+                    serverTrovato = true;
+                    scope( fault_connection )
                     {
+                        //Contatto il server
+                        install( IOException => println@Console( "IOException: Non è possibile raggiungere il server" )() );
+                        Server.location = global.root.server.address;
 
-                        undef( tmpRepo );
+                        // Invio una richiesta al server e mi ritorna la sua struttura della repo
+                        pullRequest@Server( command.result[2] )( serverRepo_tree );
 
-                        repoClientTrovata = false;
-
-                        //Controllo se ho la repo registrata localmente
-                        for(j=0, j<#global.root.repo && !repoClientTrovata, j++)
-                        {
-                            if(global.root.repo[j].name == command.result[2])
-                            {
-                                tmpRepo = global.root.repo[j].path;
-                                tmpRepo.relativePath = global.root.repo[j].name; 
-                                repoClientTrovata = true
-                            }
+                        // Se la repo non è presente sul server
+                        if (serverRepo_tree != "NonTrovata") {
+                            repoServerTrovata = true
                         };
 
-
-                        pullFlag = true;
-
-                        if( !repoClientTrovata )
+                        //Se è presente sul server continuiamo
+                        if(repoServerTrovata)
                         {
-                            creazione = false;
-                            while( !creazione )
-                            {
-                                print@Console( "[ATTENZIONE] : La repo richiesta non è presente localmente, vuoi crearla? [Y/N] \n> " )();
-                                in( conferma );
-                                if( conferma == "Y" || conferma == "y" )
-                                {
-                                    creazione = true;
-                                    pathFlag = false;
 
-                                    println@Console( "Dove vuoi creare la repository? " )();
-                                    while( !pathFlag )
+                            undef( tmpRepo );
+
+                            repoClientTrovata = false;
+
+                            //Controllo se ho la repo registrata localmente e, se è presente, che sia associata al server specificato
+                            for(j=0, j<#global.root.repo && !repoClientTrovata, j++)
+                            {
+                                if( global.root.repo[j].name == command.result[2] && global.root.repo[j].serverName == command.result[1] )
+                                {
+                                    tmpRepo = global.root.repo[j].path;
+                                    tmpRepo.relativePath = global.root.repo[j].name; 
+                                    repoClientTrovata = true
+                                }
+                            };
+
+
+                            pullFlag = true;
+
+                            if( !repoClientTrovata )
+                            {
+                                creazione = false;
+                                while( !creazione )
+                                {
+                                    print@Console( "[ATTENZIONE] : La repo richiesta non è presente localmente, vuoi crearla? [Y/N] \n> " )();
+                                    in( conferma );
+                                    if( conferma == "Y" || conferma == "y" )
                                     {
-                                        print@Console( "Inserisci il path > " )();
-                                        in( tmpRepo );
-                                        mkdir@File(tmpRepo+"/"+command.result[2])(pathFlag);
+                                        creazione = true;
+                                        pathFlag = false;
 
-                                        //Se creo correttamente la repository la aggiungo a struttura e aggiorno l'xml
-                                        if(pathFlag)
+                                        println@Console( "Dove vuoi creare la repository? " )();
+                                        while( !pathFlag )
                                         {
-                                            tmpRepo = tmpRepo+"/"+command.result[2];
-                                            tmpRepo.relativePath = command.result[2]; 
+                                            print@Console( "Inserisci il path > " )();
+                                            in( tmpRepo );
+                                            mkdir@File(tmpRepo+"/"+command.result[2])(pathFlag);
+
+                                            //Se creo correttamente la repository la aggiungo a struttura e aggiorno l'xml
+                                            if(pathFlag)
+                                            {
+                                                tmpRepo = tmpRepo+"/"+command.result[2];
+                                                tmpRepo.relativePath = command.result[2]; 
 
 
-                                            with( tmp ){
-                                              .name = tmpRepo.relativePath;
-                                              .path = tmpRepo;
-                                              .serverName = command.result[1];
-                                              .serverAddress = global.root.server[i].address
-                                            };
+                                                with( tmp ){
+                                                  .name = tmpRepo.relativePath;
+                                                  .path = tmpRepo;
+                                                  .serverName = command.result[1];
+                                                  .serverAddress = global.root.server[i].address
+                                                };
 
-                                            global.root.repo[#global.root.repo] << tmp;
-                                            updateXml@Locale(global.root)(xmlUpdate_res);
+                                                global.root.repo[#global.root.repo] << tmp;
+                                                updateXml@Locale(global.root)(xmlUpdate_res);
 
 
-                                            println@Console( "[SUCCESSO] : La repository è stata creata ('"+tmpRepo+"')" )();
-                                            pullFlag = true
+                                                println@Console( "[SUCCESSO] : La repository è stata creata ('"+tmpRepo+"')" )();
+                                                pullFlag = true
+                                            }
+                                            else
+                                            {
+                                                println@Console( "[ATTENZIONE] : Path non valido" )()
+                                            }
                                         }
-                                        else
-                                        {
-                                            println@Console( "[ATTENZIONE] : Path non valido" )()
-                                        }
+
                                     }
-
+                                    else if(conferma == "n" || conferma == "N")
+                                    {
+                                        creazione = true;
+                                        pullFlag = false
+                                    }
                                 }
-                                else if(conferma == "n" || conferma == "N")
-                                {
-                                    creazione = true;
-                                    pullFlag = false
-                                }
-                            }
-                        };
+                            };
 
-                        
-
-                        //QUA EFFETTUO LA PULL
-                        if(pullFlag)
-                        {   
-                            //Elimino dall'absolute path il reponame e aggiungo il relative path del file
-                            absPath = tmpRepo;
-                            relPath = tmpRepo.relativePath;
-
-
-                            length@StringUtils( absPath )(absoluteLength);
-                            length@StringUtils( relPath )(reponameLength);
-                            sub_request = absPath;
-                            sub_request.begin = 0;
-                            sub_request.end = absoluteLength - reponameLength;
-                            substring@StringUtils(sub_request)(sub_res);
                             
 
-                            path = sub_res;
-                            println@Console( path )();
+                            //QUA EFFETTUO LA PULL
+                            if(pullFlag)
+                            {   
+                                //Elimino dall'absolute path il reponame e aggiungo il relative path del file
+                                absPath = tmpRepo;
+                                relPath = tmpRepo.relativePath;
 
-                            // Visita in ampiezza della repo_tree inviata dal server per
-                            // creare la fileToPull list
-                            coda[0] << serverRepo_tree;
-                            dim = #coda;
 
-                            while(dim > 0)
-                            {
-                                undef( tmpRoot );
-                                tmpRoot << coda[0];
+                                length@StringUtils( absPath )(absoluteLength);
+                                length@StringUtils( relPath )(reponameLength);
+                                sub_request = absPath;
+                                sub_request.begin = 0;
+                                sub_request.end = absoluteLength - reponameLength;
+                                substring@StringUtils(sub_request)(sub_res);
+                                
 
-                                undef( coda[0] );
-                                dim = #tmpRoot;
+                                path = sub_res;
+
+                                // Visita in ampiezza della repo_tree inviata dal server per
+                                // creare la fileToPull list
+                                coda[0] << serverRepo_tree;
+                                dim = #coda;
+
+                                while(dim > 0)
                                 {
-                                    // Scorro le sottocartelle
-                                    for(i=0, i<#tmpRoot.repo, i++)
-                                    {
-                                        coda[#coda] << tmpRoot.repo[i];
-                                        repo_path = path+tmpRoot.repo[i].relativePath;
-                                        exists@File(repo_path)(esiste);
+                                    undef( tmpRoot );
+                                    tmpRoot << coda[0];
 
-                                        // Se la sottodirectory non esiste la creo nella repo del client
-                                        if(!esiste)
+                                    undef( coda[0] );
+                                    dim = #tmpRoot;
+                                    {
+                                        // Scorro le sottocartelle
+                                        for(i=0, i<#tmpRoot.repo, i++)
                                         {
-                                            mkdir@File( repo_path )( mkdir_response )
-                                        }
-                                    }
+                                            coda[#coda] << tmpRoot.repo[i];
+                                            repo_path = path+tmpRoot.repo[i].relativePath;
+                                            exists@File(repo_path)(esiste);
 
-                                        |
-
-                                    // Scorro tutti i file
-                                    for(j=0, j<#tmpRoot.file, j++)
-                                    {
-                                        // Trasformo il path relativo in assoluto
-                                        file_path = path+tmpRoot.file[j].relativePath;
-
-                                        // Verifico l'esistenza del file
-                                        exists@File( file_path )( fileEsiste );
-                                        if( fileEsiste )
-                                        {   
-                                            // Ottengo la versione del file in locale e la confronto con quella del server
-                                            getLastModString@JavaService( file_path )( c_version );
-
-                                            client_version = long(c_version);
-                                            server_version = tmpRoot.file[j].version;
-
-                                            if( client_version < server_version )
+                                            // Se la sottodirectory non esiste la creo nella repo del client
+                                            if(!esiste)
                                             {
-                                                list.fileToPull[ #list.fileToPull ] = tmpRoot.file[ j ].relativePath
-                                            }
-
-                                            else if ( client_version > server_version )
-                                            {
-                                                list.fileToPush[ #list.fileToPush ] = tmpRoot.file[ j ].relativePath
+                                                mkdir@File( repo_path )( mkdir_response )
                                             }
                                         }
 
-                                        // Se il file non è c'è in locale del client è sicuramente da pullare
-                                        else
-                                        {
-                                            list.fileToPull[ #list.fileToPull ] = tmpRoot.file[j].relativePath
-                                        }
+                                            |
 
-                                    }
+                                        // Scorro tutti i file
+                                        for(j=0, j<#tmpRoot.file, j++)
+                                        {
+                                            // Trasformo il path relativo in assoluto
+                                            file_path = path+tmpRoot.file[j].relativePath;
+
+                                            // Verifico l'esistenza del file
+                                            exists@File( file_path )( fileEsiste );
+                                            if( fileEsiste )
+                                            {   
+                                                // Ottengo la versione del file in locale e la confronto con quella del server
+                                                getLastModString@JavaService( file_path )( c_version );
+
+                                                client_version = long(c_version);
+                                                server_version = tmpRoot.file[j].version;
+
+                                                if( client_version < server_version )
+                                                {
+                                                    list.fileToPull[ #list.fileToPull ] = tmpRoot.file[ j ].relativePath
+                                                }
+
+                                                else if ( client_version > server_version )
+                                                {
+                                                    list.fileToPush[ #list.fileToPush ] = tmpRoot.file[ j ].relativePath
+                                                }
+                                            }
+
+                                            // Se il file non è c'è in locale del client è sicuramente da pullare
+                                            else
+                                            {
+                                                list.fileToPull[ #list.fileToPull ] = tmpRoot.file[j].relativePath
+                                            }
+
+                                        }
+                                    };
+
+                                    dim = #coda
+
                                 };
 
-                                dim = #coda
 
-                            };
+                                clientPullList.fileToPull << list.fileToPull;
+                                clientPullList = command.result[2];
 
+                                pull@Server( clientPullList )( rawList );
 
-                            clientPullList.fileToPull << list.fileToPull;
-                            clientPullList = command.result[2];
-                            
-                            pull@Server( clientPullList )( rawList );
-                            for ( k = 0, k < #rawList.file , k++ )
-                            {
-                                rawList.file[k].filename = path+rawList.file[k].filename;
+                                for ( k = 0, k < #rawList.file , k++ )
+                                {
+                                    rawList.file[k].filename = path+rawList.file[k].filename;
 
-                                serverVersion.path = rawList.file[k].filename;
-                                serverVersion.version = rawList.file[k].version;
-                                undef(rawList.file[k].version);
+                                    serverVersion.path = rawList.file[k].filename;
+                                    serverVersion.version = rawList.file[k].version;
+                                    undef(rawList.file[k].version);
 
-                                writeFile@File(rawList.file[k])();
-                                setLastMod@JavaService(serverVersion)(r)
-                                
-                            };
-                            println@Console( "[SUCCESSO] : Pull effettuata correttamente" )()
+                                    writeFile@File(rawList.file[k])();
+                                    setLastMod@JavaService(serverVersion)(r)
+                                    
+                                };
+                                println@Console( "[SUCCESSO] : Pull effettuata correttamente" )()
+                            }
+                        }
+                        else
+                        {
+                            println@Console( "[ATTENZIONE] : La repo richiesta non è presente sul server" )()
                         }
                     }
-                    else
-                    {
-                        println@Console( "[ATTENZIONE] : La repo richiesta non è presente sul server" )()
-                    }
+                    
                 }
-                
             }
+        }
+        else
+        {
+            println@Console( "[ATTENZIONE]: Definire correttamente i parametri [serverName] e [repoName]" )()
         }
     }
 
+    /* 
 
-
-    /* */
+    */
     else if ( command.result[0] == "delete" )
     {
+
+        if( is_defined( command.result[1] ) && is_defined( command.result[2] ) )
         {
-            
             repoTrovata = false;
             for( i=0, i<#global.root.repo && !repoTrovata, i++ )
             {
@@ -708,22 +741,15 @@ define eseguiComando
                 println@Console( "[ATTENZIONE] : La repository non è registrata localmente" )()
             }
         }
+        else
+        {
+            println@Console( "[ATTENZIONE]: Definire correttamente i parametri [serverName] e [repoName]" )()
+        }
     }
 
-
-
-    /*Comando utilizzato per testare delle funzionalità */ 
-    else if (command.result[0] == "test")
-    {
-
-        println@Console( "" )()
-    }
-
-
-
-
-    /*  Se non ricevo un comando di quelli definiti, informo l'utente che il comando
-        non è stato riconosciuto.   */
+    /*  
+        Se il comando inserito non è tra quelli riconosciuti l'utente ne viene informato   
+    */
     else
     {
 

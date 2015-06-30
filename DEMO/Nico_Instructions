@@ -1,4 +1,0 @@
-addServer Server1 socket://localhost:8000
-addServer Server2 socket://localhost:8001
-addRepository Server1 JolieProject /Users/Nico/Desktop/JolieProject
-close
