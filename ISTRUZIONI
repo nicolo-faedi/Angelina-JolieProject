@@ -3,10 +3,14 @@
 I clients sono completamente automatizzati. 
 Es. Avviando "Client1.sh" si avvia il servizio "ClientDemo.ol" passando come nickname 
 direttamente il filename 'Client1'. Il servizio esegue sulla CLI le istruzioni presenti nel file 
-"Client1_Instructions" alternate da uno sleep di 4 secondi.
+"Client1_Instructions" alternate da uno sleep di 4 secondi, definito da "Timer_wait" in ClientDemo.ol
+Le istruzioni sono come da specifica del 'report_template' sezione ###Demo, utilizzando una cartella "RepoTest"
+contenente dei file e delle sottocartelle.
+Client2 crea il file "new_file" ed effettua la push.
 
 Il server viene avviato @ socket://localhost:8000 
 Nelle sezioni critiche agisce uno sleep di 6 secondi per aumentare la probabilità che vi siano situazioni di concorrenza.
+
 
 
 - ISTRUZIONI Avvio Demo (2 Clients - 1 Server)
@@ -15,7 +19,7 @@ Nelle sezioni critiche agisce uno sleep di 6 secondi per aumentare la probabilit
 
 	2. Avviare da terminale 'jolie ../DEMO/Server.ol'
 
-	3. Avviare in due terminali 'jolie ../DEMO/Client1.sh' e 'jolie ../DEMO/Client2.sh' contemporaneamente
+	3. Avviare in due terminali 'jolie ../DEMO/Client1.sh' e 'jolie ../DEMO/Client2.sh'
 
 	4. Le istruzioni verranno stampate a video con i risultati
 

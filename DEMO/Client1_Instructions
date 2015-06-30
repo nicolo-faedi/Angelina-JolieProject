@@ -1,4 +1,4 @@
 addServer Server1 socket://localhost:8000
-addServer Server2 socket://localhost:8001
-addRepository Server1 Repo /Users/Nico/Desktop/Repo
+addRepository Server1 RepoTest RepoTest
+push Server1 RepoTest
 close

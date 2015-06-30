@@ -747,6 +747,20 @@ define eseguiComando
         }
     }
 
+    else if ( command.result[0] == "createFile" )
+    {
+        for(i=0, i<#global.root.repo, i++)
+        {
+            if(global.root.repo[i].name = command.result[1])
+            {
+                println@Console( "CREO IL FILE 'new_file'" )();
+                writeRequest.content = " ";
+                writeRequest.fileName = clientPath+"/"+command.result[1]+"/new_file";
+                writeFile@File(writeRequest)(writeResponse)
+            }
+        }
+    }
+
     /*  
         Se il comando inserito non è tra quelli riconosciuti l'utente ne viene informato   
     */
