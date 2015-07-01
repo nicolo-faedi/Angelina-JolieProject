@@ -21,7 +21,7 @@ push [serverName] [repoName]                        Fa push dell’ultima versio
 pull [serverName] [repoName]                        Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
 delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.
 test\n",
-    Timer_wait = 4000
+    Timer_wait = 5000
 }
 
 outputPort Server {
@@ -302,8 +302,7 @@ define eseguiComando
                         tmpServer << global.root.server[i];
                         ser = true
                     }
-                } 
-                    |
+                } ;
                 //Controllo se la repo è già stata registrata come repo associata a server specificato
                 for(j=0, j<#global.root.repo && rep, j++)
                 {
@@ -316,38 +315,43 @@ define eseguiComando
         
             if( ser ) //Il server è registrato
             {  
-                addRepo.name = command.result[2];
-                addRepo.path = command.result[3];
-                addRepo.serverName = command.result[1];
-                addRepo.serverAddress = tmpServer.address;
                 {
-                    scope (fault_connection)
-                    {
-                        install ( IOException => println@Console( "IOException: Non è stato possibile creare la repository sul server, perché non è raggiungibile" )() );
-                        Server.location = tmpServer.address;
-                        addRepository@Server( addRepo )
-                    }
-                }
-                    |
+                    addRepo.name = command.result[2];
+                    addRepo.path = command.result[3];
+                    addRepo.serverName = command.result[1];
+                    addRepo.serverAddress = tmpServer.address
+                };
+
                 {
-                    if( rep ) //La repo non è stata registrata localmente
                     {
-                        exists@File( addRepo.path )( res );
-                        global.root.repo[#global.root.repo] << addRepo;
-                        if(res)
+                        scope (fault_connection)
                         {
-                            println@Console( "[SUCCESSO]: Ho registrato localmente '" +addRepo.name+ "'@ " +addRepo.serverName )()
+                            install ( IOException => println@Console( "IOException: Non è stato possibile creare la repository sul server, perché non è raggiungibile" )() );
+                            Server.location = tmpServer.address;
+                            addRepository@Server( addRepo )
                         }
-                        else
-                        {
-                            mkdir@File( addRepo.path )( response );
-                            println@Console( "[ATTENZIONE]: Non ho trovato '" +addRepo.path+ "', ho comunque creato la repository" )()
-                        };
-                        updateXml@Locale(global.root)(r)
                     }
-                    else //La repo è già stata registrata localmente
+                        |
                     {
-                        println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate sul server " +addRepo.serverName )()
+                        if( rep ) //La repo non è stata registrata localmente
+                        {
+                            exists@File( addRepo.path )( res );
+                            global.root.repo[#global.root.repo] << addRepo;
+                            if(res)
+                            {
+                                println@Console( "[SUCCESSO]: Ho registrato localmente '" +addRepo.name+ "'@ " +addRepo.serverName )()
+                            }
+                            else
+                            {
+                                mkdir@File( addRepo.path )( response );
+                                println@Console( "[ATTENZIONE]: Non ho trovato '" +addRepo.path+ "', ho comunque creato la repository" )()
+                            };
+                            updateXml@Locale(global.root)(r)
+                        }
+                        else //La repo è già stata registrata localmente
+                        {
+                            println@Console( "[ATTENZIONE]: Repository già presente tra quelle registrate sul server " +addRepo.serverName )()
+                        }
                     }
                 }
             }
@@ -390,64 +394,67 @@ define eseguiComando
                         fileToValue@Locale(tmpRepo)(repo_tree);
                         repo_tree = global.root.repo[i].name;
 
-                        
+
                         Server.location = global.root.repo[i].serverAddress;
                         pushRequest@Server( repo_tree )( pushList );
-                        //println@Console( "Attendo risposta server.." )();
 
+                        rawList = "";
+                        
+                        for(k=0, k < #pushList.fileToPush, k++)
                         {
-                            for(k=0, k < #pushList.fileToPush, k++)
-                            {
-                                
-                                //Elimino dall'absolute path il reponame e aggiungo il relative path del file
-                                length@StringUtils(global.root.repo[i].path)(absoluteLength);
-                                length@StringUtils(global.root.repo[i].name)(reponameLength);
-                                sub_request = global.root.repo[i].path;
-                                sub_request.begin = 0;
-                                sub_request.end = absoluteLength - reponameLength;
-                                substring@StringUtils(sub_request)(sub_res);
+                            //Elimino dall'absolute path il reponame e aggiungo il relative path del file
+                            length@StringUtils(global.root.repo[i].path)(absoluteLength);
+                            length@StringUtils(global.root.repo[i].name)(reponameLength);
+                            sub_request = global.root.repo[i].path;
+                            sub_request.begin = 0;
+                            sub_request.end = absoluteLength - reponameLength;
+                            substring@StringUtils(sub_request)(sub_res);
 
-                                file.filename = sub_res+pushList.fileToPush[k];
+                            file.filename = sub_res+pushList.fileToPush[k];
 
-                                //println@Console( file.filename )();
-                                file.format = format = "binary";
+                            //println@Console( file.filename )();
+                            file.format = format = "binary";
 
-                                readFile@File(file)(file.content); 
+                            //Rimuovo i campi non voluti dal servizio ReadFile@File
+                            undef( file.content );
+                            undef( file.version );
 
-                                file.filename = pushList.fileToPush[k];
+                            readFile@File(file)(file.content); 
 
-                                //Ottengo la versione del file in esame
-                                getLastModString@JavaService ( sub_res + pushList.fileToPush[k] )( v );
-                                file.version = long(v);
+                            file.filename = pushList.fileToPush[k];
 
-                                undef( file.format );
-                                rawList.file[#rawList.file] << file;
+                            //Ottengo la versione del file in esame
+                            getLastModString@JavaService ( sub_res + pushList.fileToPush[k] )( v );
+                            file.version = long(v);
 
-                                //println@Console( file.version )();
-                                //Rimuovo i campi non voluti dal servizio ReadFile@File
-                                undef( file.content );
-                                undef( file.version )
-                                
-                            }; 
-                                //INVIA I FILE AL SERVER
-                                //Aggiungo a rawList la repository in esame, per rilasciare il suo semaforo sul server.
-                                rawList = global.root.repo[i].name;
-                                push@Server(rawList);
-                                println@Console( "[SUCCESSO] : La pushRequest è stata inviata al server" )()
+                            undef( file.format );
+                            rawList.file[#rawList.file] << file
+
+                            //println@Console( file.version )();
                             
                             
-                            ;
-                                
-                            if (#pushList.fileToPull>0)
+                        };
+
+
+                        //INVIA I FILE AL SERVER
+                        //Aggiungo a rawList la repository in esame, per rilasciare il suo semaforo sul server.
+                        rawList = global.root.repo[i].name;
+                        push@Server(rawList);
+
+                        undef( rawList );
+
+                        println@Console( "[SUCCESSO] : La pushRequest è stata inviata al server" )();
+
+                        if (#pushList.fileToPull>0)
+                        {
+                            println@Console( "[ATTENZIONE] : I seguenti file nella repository non sono aggiornati" )();
+                            for(j=0, j<#pushList.fileToPull, j++)
                             {
-                                println@Console( "[ATTENZIONE] : I seguenti file nella repository non sono aggiornati" )();
-                                for(j=0, j<#pushList.fileToPull, j++)
-                                {
-                                    //STAMPO FILE TO PULL
-                                    println@Console(pushList.fileToPull[j] )()
-                                }
+                                //STAMPO FILE TO PULL
+                                println@Console(pushList.fileToPull[j] )()
                             }
-                        }                        
+                        }
+                                                
                     };
                     
                     flag = true
@@ -675,12 +682,14 @@ define eseguiComando
 
                                     serverVersion.path = rawList.file[k].filename;
                                     serverVersion.version = rawList.file[k].version;
+                                    
                                     undef(rawList.file[k].version);
-
                                     writeFile@File(rawList.file[k])();
                                     setLastMod@JavaService(serverVersion)(r)
                                     
                                 };
+                                undef( rawList );
+
                                 println@Console( "[SUCCESSO] : Pull effettuata correttamente" )()
                             }
                         }
@@ -751,11 +760,11 @@ define eseguiComando
     {
         for(i=0, i<#global.root.repo, i++)
         {
-            if(global.root.repo[i].name = command.result[1])
+            if(global.root.repo[i].name == command.result[1])
             {
-                println@Console( "CREO IL FILE 'new_file'" )();
-                writeRequest.content = " ";
-                writeRequest.fileName = clientPath+"/"+command.result[1]+"/new_file";
+                println@Console( "CREO IL FILE 'new_file.txt'" )();
+                writeRequest.content = "<vuoto>";
+                writeRequest.filename = clientPath+"/"+command.result[1]+"/new_file.txt";
                 writeFile@File(writeRequest)(writeResponse)
             }
         }
