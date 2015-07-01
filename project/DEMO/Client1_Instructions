@@ -1,0 +1,4 @@
+addServer Server1 socket://localhost:8000
+addRepository Server1 RepoTest RepoTest
+push Server1 RepoTest
+close

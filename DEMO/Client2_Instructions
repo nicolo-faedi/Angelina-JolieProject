@@ -1,7 +1,0 @@
-addServer Server1 socket://localhost:8000
-list new_repos
-addRepository Server1 RepoTest Clients/Client2/RepoTest
-pull Server1 RepoTest
-createFile RepoTest
-push Server1 RepoTest
-close
