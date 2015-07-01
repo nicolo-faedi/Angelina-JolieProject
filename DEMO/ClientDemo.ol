@@ -21,7 +21,7 @@ push [serverName] [repoName]                        Fa push dell’ultima versio
 pull [serverName] [repoName]                        Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
 delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.
 test\n",
-    Timer_wait = 5000
+    Timer_wait = 4000
 }
 
 outputPort Server {

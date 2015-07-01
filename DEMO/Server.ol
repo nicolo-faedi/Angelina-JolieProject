@@ -9,7 +9,7 @@ include "queue_utils.iol"
 constants {
 	S_LOCATION = "socket://localhost:8000",
 	S_NAME = "Server1",
-	Timer_wait = 0
+	Timer_wait = 6000
 }
 
 outputPort Locale {
