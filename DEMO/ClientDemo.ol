@@ -1,3 +1,12 @@
+/*
+    Progetto di Sistemi Operativi, Informatica per il Management 2014/15
+
+    #### Team Angelina © ####
+    Pietro Tamburini        Matr. 590603
+    Nicolò Faedi            Matr. 694919
+    Massimo-Maria Barbato   Matr. 732766
+*/
+
 include "file.iol"
 include "console.iol"
 include "xml_utils.iol"

@@ -1,9 +1,19 @@
+/*
+    Progetto di Sistemi Operativi, Informatica per il Management 2014/15
+
+    #### Team Angelina © ####
+    Pietro Tamburini        Matr. 590603
+    Nicolò Faedi            Matr. 694919
+    Massimo-Maria Barbato   Matr. 732766
+*/
+
 include "file.iol"
 include "console.iol"
 include "xml_utils.iol"
 include "Interface.iol"
 include "string_utils.iol"
 include "exec.iol"
+include "time.iol"
 
 constants {
     HELP = "
@@ -19,6 +29,7 @@ addRepository [serverName] [repoName] [localPath]   Aggiunge una repository ai r
 push [serverName] [repoName]                        Fa push dell’ultima versione di 'repoName' locale sul server 'serverName'.
 pull [serverName] [repoName]                        Fa pull dell’ultima versione di 'repoName' dal server 'serverName'.        
 delete [serverName] [repoName]                      Rimuove il repository dai repo registrati.
+angelina                                            Secret.
 \n"
 }
 
@@ -102,7 +113,6 @@ define eseguiComando
     */
     else if ( command.result[0] == "clear" ) 
     {
-
         exec@Exec( command.result[0] )( cmdResponse );
         print@Console( cmdResponse )()
     }
@@ -753,6 +763,24 @@ define eseguiComando
         else
         {
             println@Console( "[ATTENZIONE]: Definire correttamente i parametri [serverName] e [repoName]" )()
+        }
+    }
+
+    /* TOP SECRET */
+    else if ( command.result[0] == "angelina" )
+    {
+        ms = 100;
+        messaggio = "|- -T-E-A-M- -A-N-G-E-L-I-N-A- - © -|-\n-\n-M-a-s-s-i-m-o-\n-N-i-c-o-l-ò-\n-P-i-e-t-r-o-\n";
+        messaggio.regex = "-";
+        split@StringUtils(messaggio)(m_split);
+        undef( messaggio );
+        for(i=0, i<#m_split.result, i++)
+        {
+            messaggio = messaggio + m_split.result[i];
+            exec@Exec( "clear" )( cmdResponse );
+            print@Console( cmdResponse )();
+            println@Console( messaggio )();
+            sleep@Time(ms)()
         }
     }
 

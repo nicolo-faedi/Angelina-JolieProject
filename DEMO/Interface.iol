@@ -1,4 +1,13 @@
 /*
+	Progetto di Sistemi Operativi, Informatica per il Management 2014/15
+
+	#### Team Angelina © ####
+	Pietro Tamburini        Matr. 590603
+	Nicolò Faedi            Matr. 694919
+	Massimo-Maria Barbato   Matr. 732766
+*/
+
+/*
 	Struttura viene utilizzata sia da client e da server.
 	Nel primo caso (client), la struttura ha due liste, 
 	una di regServer e una di regRepo. Nel secondo caso (server), 
